@@ -108,11 +108,17 @@ else if( $action == "clear_log" ) {
 else if( $action == "show_data" ) {
     ns_showData();
     }
-else if( $action == "place_flag" ) {
-    ns_placeFlag();
+else if( $action == "get_note_list" ) {
+    ns_getNoteList();
     }
-else if( $action == "get_flags" ) {
-    ns_getFlags();
+else if( $action == "get_note" ) {
+    ns_getNote();
+    }
+else if( $action == "add_note" ) {
+    ns_addNote();
+    }
+else if( $action == "update_note" ) {
+    ns_updateNote();
     }
 else if( $action == "ns_setup" ) {
     global $setup_header, $setup_footer;
@@ -452,84 +458,86 @@ http://localhost/jcr13/game10_flag/server.php?action=place_flag&level_number=5&l
 
 
 
-function ns_getFlags() {
-    $level_number = "";
-    if( isset( $_REQUEST[ "level_number" ] ) ) {
-        $level_number = $_REQUEST[ "level_number" ];
-        }
-    $level_seed = "";
-    if( isset( $_REQUEST[ "level_seed" ] ) ) {
-        $level_seed = $_REQUEST[ "level_seed" ];
-        }
+function ns_getNoteList() {
+
+    ns_checkPassword( "get_note" );
 
     
-    global $tableNamePrefix, $remoteIP;
+    
+    global $tableNamePrefix;
 
     
-    // disable autocommit so that FOR UPDATE actually works
-    ns_queryDatabase( "SET AUTOCOMMIT = 0;" );
-    
-
     /*
             "CREATE TABLE $tableName(" .
-            "level_number INT NOT NULL," .
-            "level_seed INT UNSIGNED NOT NULL," .
+            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "hash CHAR(40) NOT NULL," .
             "creation_date DATETIME NOT NULL," .
             "change_date DATETIME NOT NULL," .
-            "change_ip_address CHAR(15) NOT NULL," .
-            "change_count INT UNSIGNED NOT NULL," .
             "view_date DATETIME NOT NULL," .
-            "view_count INT UNSIGNED NOT NULL," .
-            "flag_a CHAR(9) NOT NULL," .
-            "flag_b CHAR(9) NOT NULL," .
-            "PRIMARY KEY( level_number, level_seed ) ) ENGINE = INNODB;";
+            "title_line VARCHAR(60) NOT NULL," .
+            "body_text LONGTEXT )";
     */
 
     
-    $query = "SELECT * FROM $tableNamePrefix"."flags ".
-        "WHERE level_number = '$level_number' AND level_seed = '$level_seed' ".
-        "FOR UPDATE;";
+    $query = "SELECT uid, hash FROM $tableNamePrefix"."notes ";
     $result = ns_queryDatabase( $query );
 
     $numRows = mysql_numrows( $result );
 
-    if( $numRows == 1 ) {
-        $row = mysql_fetch_array( $result, MYSQL_ASSOC );
-        
-        $flag_a = $row[ "flag_a" ];
-        $flag_b = $row[ "flag_b" ];
 
-        
-        $view_count = $row[ "view_count" ];
-        $view_count ++;
-        
-        
-        
-        $query = "UPDATE $tableNamePrefix"."flags SET " .
-            "view_date = CURRENT_TIMESTAMP, " .
-            "view_count = '$view_count' " .
-            "WHERE level_number = '$level_number' AND ".
-            "level_seed = '$level_seed';";
-        
-        $result = ns_queryDatabase( $query );
+    for( $i=0; $i<$numRows; $i++ ) {
+        $uid = mysql_result( $result, $i, "uid" );
+        $hash = mysql_result( $result, $i, "hash" );
+
+        echo "$uid $hash\n";
+        }
+    }
 
 
-        echo "$flag_a $flag_b";
+
+function ns_getNote() {
+
+    ns_checkPassword( "get_note_list" );
+    
+    $uid = "";
+    if( isset( $_REQUEST[ "uid" ] ) ) {
+        $uid = $_REQUEST[ "uid" ];
         }
     else {
-        // doesn't exist yet
-
-        echo "BLANKFLAG BLANKFLAG";
+        echo "REJECTED";
+        die();
         }
-
-    /*
-http://localhost/jcr13/game10_flag/server.php?action=get_flags&level_number=5&level_seed=234890902
-     */
-
-    // unlock rows that were locked by FOR UPDATE above
-    ns_queryDatabase( "COMMIT;" );
     
-    ns_queryDatabase( "SET AUTOCOMMIT = 1;" );
+    
+    global $tableNamePrefix;
+
+    
+    /*
+            "CREATE TABLE $tableName(" .
+            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "hash CHAR(40) NOT NULL," .
+            "creation_date DATETIME NOT NULL," .
+            "change_date DATETIME NOT NULL," .
+            "view_date DATETIME NOT NULL," .
+            "title_line VARCHAR(60) NOT NULL," .
+            "body_text LONGTEXT )";
+    */
+
+    
+    $query = "SELECT body_text FROM $tableNamePrefix"."notes ".
+        "WHERE uid = '$uid'";
+    $result = ns_queryDatabase( $query );
+
+    $numRows = mysql_numrows( $result );
+
+
+    if( $numRows == 1 ) {
+        $body_text = mysql_result( $result, $i, "body_text" );
+        echo "$body_text";
+        }
+    else {
+        echo "REJECTED";
+        }
     }
 
 
@@ -996,7 +1004,7 @@ function ns_checkPassword( $inFunctionName ) {
     global $accessPasswords;
     
     if( ! in_array( $password, $accessPasswords ) ) {
-        echo "Incorrect password.";
+        echo "REJECTED";
 
         ns_log( "Failed $inFunctionName access with password:  $password" );
 
