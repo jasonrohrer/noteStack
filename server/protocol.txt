@@ -27,7 +27,7 @@ text body of note
 
 
 === Call:
-server.php?password=[password]&action=add_note&note_body=[body text]
+server.php?password=[password]&action=add_note&body_text=[body text]
 
 Returns:
 UID hash
@@ -35,7 +35,7 @@ UID hash
 
 
 === Call:
-server.php?password=[password]&action=update_note&uid=[UID]&note_body=[body text]
+server.php?password=[password]&action=update_note&uid=[UID]&body_text=[body text]
 
 Returns:
 hash

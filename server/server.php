@@ -164,7 +164,7 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
 
         echo "<H2>Note Server Web-based Setup</H2>";
     
-        echo "Flag Server will walk you through a " .
+        echo "Note Server will walk you through a " .
             "brief setup process.<BR><BR>";
         
         echo "Step 1: ".
@@ -532,12 +532,74 @@ function ns_getNote() {
 
 
     if( $numRows == 1 ) {
-        $body_text = mysql_result( $result, $i, "body_text" );
+        $body_text = mysql_result( $result, 0, "body_text" );
         echo "$body_text";
         }
     else {
         echo "REJECTED";
         }
+    }
+
+
+
+
+function ns_addNote() {
+
+    ns_checkPassword( "get_note_list" );
+    
+    $body_text = "";
+    if( isset( $_REQUEST[ "body_text" ] ) ) {
+        $body_text = $_REQUEST[ "body_text" ];
+        }
+    else {
+        echo "REJECTED";
+        die();
+        }
+
+    $hash = sha1( $body_text );
+
+    $pieces = explode("\n", $body_text, 2 );
+
+    $title_line = "";
+    
+    if( count( $pieces ) > 0 ) {
+        
+        $title_line = $pieces[0];
+        }
+
+    $title_line = substr( $title_line, 0, 60 );
+    
+    
+    
+    global $tableNamePrefix;
+
+    
+    /*
+            "CREATE TABLE $tableName(" .
+            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "hash CHAR(40) NOT NULL," .
+            "creation_date DATETIME NOT NULL," .
+            "change_date DATETIME NOT NULL," .
+            "view_date DATETIME NOT NULL," .
+            "title_line VARCHAR(60) NOT NULL," .
+            "body_text LONGTEXT )";
+    */
+
+    // uid is created by auto-increment
+    $query = "INSERT INTO $tableNamePrefix". "notes ".
+        "( hash, creation_date,  change_date, view_date, ".
+        "  title_line, body_text ) ".
+        "VALUES ( " .
+        "'$hash', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ".
+        "CURRENT_TIMESTAMP, '$title_line', ".
+        "'$body_text' );";
+
+    $result = ns_queryDatabase( $query );
+
+    $uid = mysql_insert_id();
+
+
+    echo "$uid";
     }
 
 
