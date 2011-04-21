@@ -497,7 +497,7 @@ function ns_getNoteList() {
 
 function ns_getNote() {
 
-    ns_checkPassword( "get_note_list" );
+    ns_checkPassword( "get_note" );
     
     $uid = "";
     if( isset( $_REQUEST[ "uid" ] ) ) {
@@ -541,11 +541,32 @@ function ns_getNote() {
     }
 
 
+function getTitleLine( $inBodyText ) {
+    $pieces = explode("\n", $inBodyText, 2 );
+
+    $title_line = "";
+    
+    if( count( $pieces ) > 0 ) {
+        
+        $title_line = $pieces[0];
+        }
+
+    if( strlen( $title_line > 60 ) ) {
+        // trim it more
+        
+        $title_line = substr( $title_line, 0, 57 );
+        $title_line = $title_line . "...";
+        }
+    return $title_line;
+    }
+
+
+
 
 
 function ns_addNote() {
 
-    ns_checkPassword( "get_note_list" );
+    ns_checkPassword( "add_note" );
     
     $body_text = "";
     if( isset( $_REQUEST[ "body_text" ] ) ) {
@@ -558,16 +579,8 @@ function ns_addNote() {
 
     $hash = sha1( $body_text );
 
-    $pieces = explode("\n", $body_text, 2 );
-
-    $title_line = "";
     
-    if( count( $pieces ) > 0 ) {
-        
-        $title_line = $pieces[0];
-        }
-
-    $title_line = substr( $title_line, 0, 60 );
+    $title_line = getTitleLine( $body_text );
     
     
     
@@ -600,6 +613,62 @@ function ns_addNote() {
 
 
     echo "$uid";
+    }
+
+
+
+
+function ns_updateNote() {
+
+    ns_checkPassword( "update_note" );
+    
+    $uid = "";
+    if( isset( $_REQUEST[ "uid" ] ) ) {
+        $uid = $_REQUEST[ "uid" ];
+        }
+    else {
+        echo "REJECTED";
+        die();
+        }
+
+    $body_text = "";
+    if( isset( $_REQUEST[ "body_text" ] ) ) {
+        $body_text = $_REQUEST[ "body_text" ];
+        }
+    else {
+        echo "REJECTED";
+        die();
+        }
+
+    $hash = sha1( $body_text );
+
+    $title_line = getTitleLine( $body_text );
+        
+    
+    
+    global $tableNamePrefix;
+
+    
+    /*
+            "CREATE TABLE $tableName(" .
+            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "hash CHAR(40) NOT NULL," .
+            "creation_date DATETIME NOT NULL," .
+            "change_date DATETIME NOT NULL," .
+            "view_date DATETIME NOT NULL," .
+            "title_line VARCHAR(60) NOT NULL," .
+            "body_text LONGTEXT )";
+    */
+    
+    // uid is created by auto-increment
+    $query = "UPDATE $tableNamePrefix". "notes SET ".
+        "hash = '$hash', change_date = CURRENT_TIMESTAMP, ".
+        "view_date = CURRENT_TIMESTAMP, title_line = '$title_line', ".
+        "body_text = '$body_text' WHERE uid = '$uid';";
+
+    $result = ns_queryDatabase( $query );
+
+    echo "$hash";
     }
 
 
