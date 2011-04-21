@@ -42,11 +42,13 @@ Any files that DON'T have .hash and .uid files are new notes that should be adde
 
 Thus, the only command needed could be "noteSync", which:
 
-1) Fetches current note list from server (UIDs and hashes)
-2) Checks for any new notes on server that we don't have.  Creates local files
-   with locally unique names.
-3) Checks for any updated notes on the server.  Updates local files.
-4) Checks for any local files that aren't on the server yet.  Posts them and
-   recieves UID and hash info back to save locally.
-5) Checks for any locally updated notes (by checking mod dates and hashes) and
+1) Checks for any locally updated notes (by checking mod dates and hashes) and
    posts the changes to the server.  Saves new hashes locally.
+2) Fetches current note list from server (UIDs and hashes)
+3) Checks for any new notes on server that we don't have.  Creates local files
+   with locally unique names.
+4) Checks for any updated notes on the server.  Updates local files.
+5) Checks for any local files that aren't on the server yet.  Posts them and
+   recieves UID and hash info back to save locally.
+
+Note that (1) MUST happen first to avoid the problem of changed notes on the server (that haven't been synced locally yet) from overwriting locally-changed notes.  Since this is a single-user system, these conflicts are resolved by letting local changes trump non-local ones (if you edited a document twice, once on the web server, and then again locally, the local change should be chosen)
