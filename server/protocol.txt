@@ -1,0 +1,44 @@
+All returns are whitespace-delimited.
+
+
+On error (e.g., password failure), returns:
+REJECTED
+
+
+
+=== Call:
+server.php?password=[password]&action=get_note_list
+
+Returns:
+UID hash
+UID hash
+UID hash
+UID hash
+...
+
+
+
+=== Call:
+server.php?password=[password]&action=get_note&uid=[UID]
+
+Returns:
+text body of note
+
+
+
+=== Call:
+server.php?password=[password]&action=add_note&note_body=[body text]
+
+Returns:
+UID hash
+
+
+
+=== Call:
+server.php?password=[password]&action=update_note&uid=[UID]&note_body=[body text]
+
+Returns:
+hash
+
+
+

@@ -1,0 +1,52 @@
+PHP-based note taking tool with local text checkout for both offline AND web-based editing.
+
+--Not trapped on web OR trapped on a hard drive.
+
+Don't want/need something as heavyweight as versioning.
+
+However, want to make catastrophic user errors impossible.
+
+
+Don't want to accidentally erase notes that are on the server.
+
+
+How are notes named?  What if HD editing, and creation of new local notes, falls out of sync with note creation on server?  I.e., just sequentially numbering notes won't work.  You don't want to worry or think about whether your HD has been synced before editing/creating notes.  You don't want to worry about syncing your HD before going out with your laptop.  Creating notes is the most common offline operation.
+
+Maybe notes can be nammed whatever on client side.  When syncing with server, new notes can be detected and sent to server, and central, consistent names determined THEN, at that point.
+
+
+Suppose client directory myNotes contains:
+
+myNotes/dog.txt
+myNotes/cat.txt
+myNotes/whale.txt
+
+Would also contain managed metadata directory:
+
+myNotes/NOTE_DATA
+
+NOTE_DATA directory would contain:
+
+dog.txt.hash
+dog.txt.uid
+
+and if dog.txt.uid contains A84FD9, then a file like:
+
+A84FD9.name  that contains "dog.txt"  (reverse mapping from UID to local name).
+
+...
+
+but only for notes that are on the server already.  These are the data values that were last provided by the server.  Thus, when we edit an existing note locally, we can check against the .hash file to see if the file has changed since last sync and if it should be sent to the server.
+
+Any files that DON'T have .hash and .uid files are new notes that should be added to the server on the next sync.
+
+Thus, the only command needed could be "noteSync", which:
+
+1) Fetches current note list from server (UIDs and hashes)
+2) Checks for any new notes on server that we don't have.  Creates local files
+   with locally unique names.
+3) Checks for any updated notes on the server.  Updates local files.
+4) Checks for any local files that aren't on the server yet.  Posts them and
+   recieves UID and hash info back to save locally.
+5) Checks for any locally updated notes (by checking mod dates and hashes) and
+   posts the changes to the server.  Saves new hashes locally.
