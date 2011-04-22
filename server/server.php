@@ -105,6 +105,7 @@ else if( $action == "show_log" ) {
 else if( $action == "clear_log" ) {
     ns_clearLog();
     }
+
 // protocol implementations
 else if( $action == "get_note_list" ) {
     ns_getNoteList();
@@ -118,10 +119,22 @@ else if( $action == "add_note" ) {
 else if( $action == "update_note" ) {
     ns_updateNote();
     }
+
 // web-ui implementations
 else if( $action == "list_notes" ) {
     ns_listNotes();
     }
+else if( $action == "view_note" ) {
+    ns_viewNote();
+    }
+else if( $action == "edit_note" ) {
+    ns_editNote();
+    }
+else if( $action == "new_note" ) {
+    ns_newNote();
+    }
+
+// setup
 else if( $action == "ns_setup" ) {
     global $setup_header, $setup_footer;
     echo $setup_header; 
@@ -245,8 +258,7 @@ function ns_setupDatabase() {
 function ns_showLog() {
     $password = ns_checkPassword( "show_log" );
 
-    echo "[<a href=\"server.php?action=show_data&password=$password" .
-         "\">Main</a>]<br><br><br>";
+    ns_menuBar( $password, "" );
     
     global $tableNamePrefix;
     
@@ -277,8 +289,7 @@ function ns_clearLog() {
 
     $password = ns_checkPassword( "clear_log" );
 
-    echo "[<a href=\"server.php?action=show_data&password=$password" .
-         "\">Main</a>]<br><br><br>";
+    ns_menuBar( $password, "" );
     
     global $tableNamePrefix;
 
@@ -580,6 +591,12 @@ function ns_addNote() {
         die();
         }
 
+    $from_web = 0;
+    if( isset( $_REQUEST[ "from_web" ] ) ) {
+        $from_web = $_REQUEST[ "from_web" ];
+        }
+
+    
     $hash = md5( $body_text );
 
     
@@ -615,7 +632,12 @@ function ns_addNote() {
     $uid = mysql_insert_id();
 
 
-    echo "$uid $hash";
+    if( !$from_web ) {
+        echo "$uid $hash";
+        }
+    else {
+        ns_listNotes();
+        }
     }
 
 
@@ -645,6 +667,11 @@ function ns_updateNote() {
         die();
         }
 
+    $from_web = 0;
+    if( isset( $_REQUEST[ "from_web" ] ) ) {
+        $from_web = $_REQUEST[ "from_web" ];
+        }
+    
     $hash = md5( $body_text );
 
 
@@ -675,7 +702,13 @@ function ns_updateNote() {
     $result = ns_queryDatabase( $query );
 
     if( mysql_affected_rows() == 1 ) {
-        echo "$hash";
+
+        if( !$from_web ) {
+            echo "$hash";
+            }
+        else {
+            ns_listNotes();
+            }
         }
     else {
         echo "REJECTED";
@@ -686,6 +719,30 @@ function ns_updateNote() {
 
 
 
+
+function ns_menuBar( $password, $search ) {
+?>
+            <FORM ACTION="server.php" METHOD="post">
+<?php
+    echo "[<a href=\"server.php?action=list_notes&password=$password" .
+        "\">Main</a>] --- ";
+    echo "[<a href=\"server.php?action=new_note&password=$password" .
+        "\">New</a>] --- ";
+    
+    // form for searching notes
+?>
+        
+    <INPUT TYPE="hidden" NAME="password" VALUE="<?php echo $password;?>">
+    <INPUT TYPE="hidden" NAME="action" VALUE="list_notes">
+    <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="search"
+             VALUE="<?php echo $search;?>">
+    <INPUT TYPE="Submit" VALUE="Search">
+    </FORM>
+<?php
+
+    echo "<br><br><br>";
+
+    }
 
 
 
@@ -698,11 +755,7 @@ function ns_listNotes() {
     
     $password = ns_checkPassword( "list_notes" );
 
-    global $tableNamePrefix, $remoteIP;
-    
-
-    echo "[<a href=\"server.php?action=list_notes&password=$password" .
-            "\">Main</a>]<br><br><br>";
+    global $tableNamePrefix, $remoteIP;    
 
 
 
@@ -768,19 +821,9 @@ function ns_listNotes() {
     
 
 
+    ns_menuBar( $password, $search );
 
-    // form for searching notes
-?>
-        <hr>
-            <FORM ACTION="server.php" METHOD="post">
-    <INPUT TYPE="hidden" NAME="password" VALUE="<?php echo $password;?>">
-    <INPUT TYPE="hidden" NAME="action" VALUE="list_notes">
-    <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="search"
-             VALUE="<?php echo $search;?>">
-    <INPUT TYPE="Submit" VALUE="Search">
-    </FORM>
-        <hr>
-<?php
+
 
     $recordWord = "records";
 
@@ -869,7 +912,8 @@ function ns_listNotes() {
         $viewString = dateFormat( $view_date );
             
         echo "<tr>\n";
-        echo "<td>$title_line</td>\n";
+        echo "<td><a href=\"server.php?action=view_note&uid=$uid&".
+                            "password=$password\">$title_line</a></td>\n";
         echo "<td>$creationString</td>\n";
         echo "<td>$changeString</td>\n";
         echo "<td>$viewString</td>\n";
@@ -887,6 +931,189 @@ function ns_listNotes() {
     echo "Generated for $remoteIP\n";
 
     }
+
+
+
+function ns_viewNote() {
+
+    $password = ns_checkPassword( "view_note" );
+    
+    $uid = "";
+    if( isset( $_REQUEST[ "uid" ] ) ) {
+        $uid = $_REQUEST[ "uid" ];
+        }
+    else {
+        echo "REJECTED";
+        die();
+        }
+    
+    
+    global $tableNamePrefix;
+
+    
+    /*
+            "CREATE TABLE $tableName(" .
+            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "hash CHAR(32) NOT NULL," .
+            "creation_date DATETIME NOT NULL," .
+            "change_date DATETIME NOT NULL," .
+            "view_date DATETIME NOT NULL," .
+            "title_line VARCHAR(60) NOT NULL," .
+            "body_text LONGTEXT )";
+    */
+
+    
+    $query = "SELECT body_text FROM $tableNamePrefix"."notes ".
+        "WHERE uid = '$uid'";
+    $result = ns_queryDatabase( $query );
+
+    $numRows = mysql_numrows( $result );
+
+
+
+    
+    if( $numRows != 1 ) {
+        echo "REJECTED";
+        return;
+        }
+
+    
+    $body_text = mysql_result( $result, 0, "body_text" );
+
+
+    $formattedText = preg_replace( "/\n+/", "<br><br>", $body_text );
+
+    global $header, $footer;
+    
+    eval( $header );
+
+    ns_menuBar( $password, "" );
+    
+
+    echo "[<a href=\"server.php?action=edit_note&uid=$uid&password=$password" .
+        "\">Edit</a>]<br>";
+    
+    echo $formattedText;
+    eval( $footer );
+    }
+
+
+
+function ns_editNote() {
+
+    $password = ns_checkPassword( "edit_note" );
+    
+    $uid = "";
+    if( isset( $_REQUEST[ "uid" ] ) ) {
+        $uid = $_REQUEST[ "uid" ];
+        }
+    else {
+        echo "REJECTED";
+        die();
+        }
+    
+    
+    global $tableNamePrefix;
+
+    
+    /*
+            "CREATE TABLE $tableName(" .
+            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "hash CHAR(32) NOT NULL," .
+            "creation_date DATETIME NOT NULL," .
+            "change_date DATETIME NOT NULL," .
+            "view_date DATETIME NOT NULL," .
+            "title_line VARCHAR(60) NOT NULL," .
+            "body_text LONGTEXT )";
+    */
+
+    
+    $query = "SELECT body_text FROM $tableNamePrefix"."notes ".
+        "WHERE uid = '$uid'";
+    $result = ns_queryDatabase( $query );
+
+    $numRows = mysql_numrows( $result );
+
+
+
+    
+    if( $numRows != 1 ) {
+        echo "REJECTED";
+        return;
+        }
+
+    
+    $body_text = mysql_result( $result, 0, "body_text" );
+
+
+    global $header, $footer;
+    
+    eval( $header );
+
+    ns_menuBar( $password, "" );
+    
+    ?>
+     <FORM ACTION="server.php" METHOD="post">
+     <INPUT TYPE="hidden" NAME="action"
+          VALUE="update_note">
+     <INPUT TYPE="hidden" NAME="uid"
+          VALUE="<?php echo $uid; ?>">
+     <INPUT TYPE="hidden" NAME="password"
+          VALUE="<?php echo $password; ?>">          
+     <INPUT TYPE="hidden" NAME="from_web" VALUE="1">
+
+     <TEXTAREA NAME="body_text" COLS=50
+          ROWS=10><?php echo htmlspecialchars( $body_text ); ?></TEXTAREA>
+     <br>
+     <INPUT TYPE="Submit" VALUE="Update">
+<?php
+    
+    eval( $footer );
+    }
+
+
+
+
+function ns_newNote() {
+
+    $password = ns_checkPassword( "new_note" );    
+    
+    global $tableNamePrefix;
+
+    
+    /*
+            "CREATE TABLE $tableName(" .
+            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "hash CHAR(32) NOT NULL," .
+            "creation_date DATETIME NOT NULL," .
+            "change_date DATETIME NOT NULL," .
+            "view_date DATETIME NOT NULL," .
+            "title_line VARCHAR(60) NOT NULL," .
+            "body_text LONGTEXT )";
+    */
+
+    global $header, $footer;
+    
+    eval( $header );
+
+    ns_menuBar( $password, "" );
+
+    ?>
+     <FORM ACTION="server.php" METHOD="post">
+     <INPUT TYPE="hidden" NAME="action"
+          VALUE="add_note">
+     <INPUT TYPE="hidden" NAME="password"
+          VALUE="<?php echo $password; ?>">          
+     <INPUT TYPE="hidden" NAME="from_web" VALUE="1">
+
+     <TEXTAREA NAME="body_text" COLS=50 ROWS=10></TEXTAREA>
+     <br>
+     <INPUT TYPE="Submit" VALUE="Create">
+<?php
+    
+    eval( $footer );
+    }
+
 
 
 

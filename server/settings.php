@@ -41,6 +41,11 @@ $notesPerPage = 4;
 
 
 
+// header and footers for various pages
+$header = "include( \"header.php\" );";
+$footer = "include( \"footer.php\" );";
+
+
 
 
 ?>
