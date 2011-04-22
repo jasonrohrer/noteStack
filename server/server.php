@@ -839,19 +839,20 @@ function ns_listNotes() {
 
 
 
-    $recordWord = "records";
-
-    if( $totalNotes == 1 ) {
-        $recordWord = "record";
-        }
-    
-    echo "$totalNotes note $recordWord" .$searchDisplay .
-        "$showingDisplay:<br>\n";
 
     
     $nextSkip = $skip + $notesPerPage;
 
     $prevSkip = $skip - $notesPerPage;
+
+    // use output buffering to capture these widgets so we can
+    // repeat them at the end of the list
+    ob_start();
+
+    
+    echo "<table border=0 width=100%><tr>";
+
+    echo "<td align=left>";
     
     if( $prevSkip >= 0 ) {
         echo "[<a href=\"server.php?action=list_notes&password=$password" .
@@ -864,24 +865,9 @@ function ns_listNotes() {
             "&order_by=$order_by\">Next Page</a>]";
         }
 
-
-    /*
-            "CREATE TABLE $tableName(" .
-            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
-            "hash CHAR(32) NOT NULL," .
-            "creation_date DATETIME NOT NULL," .
-            "change_date DATETIME NOT NULL," .
-            "view_date DATETIME NOT NULL," .
-            "title_line VARCHAR(60) NOT NULL," .
-            "body_text LONGTEXT )";
-    */
+    echo "</td><td align=right>";
 
     
-    echo "<br><br>";
-    
-    echo "<table border=1 cellpadding=5>\n";
-
-
     function orderLink( $inOrderBy, $inLinkText ) {
         global $password, $skip, $search, $order_by;
         if( $inOrderBy == $order_by ) {
@@ -894,12 +880,40 @@ function ns_listNotes() {
             "&search=$search&skip=$skip&order_by=$inOrderBy\">$inLinkText</a>";
         }
 
-    echo "<tr>\n";
-    echo "<td></td>\n";
-    echo "<td>".orderLink( "creation_date", "Created" )."</td>\n";
-    echo "<td>".orderLink( "change_date", "Changed" )."</td>\n";
-    echo "<td>".orderLink( "view_date", "Viewed" )."</td>\n";
-    echo "</tr>\n";
+
+    echo "Stack[ ";
+    echo orderLink( "creation_date", "Created" )." | ";
+    echo orderLink( "change_date", "Changed" )." | ";
+    echo orderLink( "view_date", "Viewed" )."";
+    echo " ]";
+
+    echo "</td></tr></table>";
+
+    $pageAndSortWidgets = ob_get_contents();
+    ob_end_clean();
+
+
+    echo $pageAndSortWidgets;
+    
+    
+    /*
+            "CREATE TABLE $tableName(" .
+            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "hash CHAR(32) NOT NULL," .
+            "creation_date DATETIME NOT NULL," .
+            "change_date DATETIME NOT NULL," .
+            "view_date DATETIME NOT NULL," .
+            "title_line VARCHAR(60) NOT NULL," .
+            "body_text LONGTEXT )";
+    */
+
+    
+    echo "";
+    
+    echo "<table border=1 cellpadding=5>\n";
+
+
+    
 
 
     function dateFormat( $inMysqlDate ) {
@@ -936,14 +950,23 @@ function ns_listNotes() {
         }
     echo "</table>";
 
+    echo $pageAndSortWidgets;
 
-    echo "<hr>";
+    $recordWord = "notes";
+
+    if( $totalNotes == 1 ) {
+        $recordWord = "note";
+        }
     
-    echo "<a href=\"server.php?action=show_log&password=$password\">".
-        "Show log</a>";
-    echo "<hr>";
-    echo "Generated for $remoteIP\n";
+    echo "<center>$totalNotes $recordWord" .$searchDisplay .
+        "$showingDisplay</center>";
 
+    
+    echo "<table border=0 width=100%><tr><td align=right>";
+    echo "<a href=\"server.php?action=show_log&password=$password\">".
+        "Log</a>";
+    echo "</td></tr></table>";
+        
     eval( $footer );
     }
 

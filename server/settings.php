@@ -37,7 +37,7 @@ $accessPasswords = array( "secret", "letmein" );
 
 
 // for list views
-$notesPerPage = 4;
+$notesPerPage = 2;
 
 
 
