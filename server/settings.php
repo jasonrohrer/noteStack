@@ -36,6 +36,10 @@ $enableLog = 1;
 $accessPasswords = array( "secret", "letmein" );
 
 
+// for list views
+$notesPerPage = 4;
+
+
 
 
 

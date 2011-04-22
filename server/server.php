@@ -105,9 +105,7 @@ else if( $action == "show_log" ) {
 else if( $action == "clear_log" ) {
     ns_clearLog();
     }
-else if( $action == "show_data" ) {
-    ns_showData();
-    }
+// protocol implementations
 else if( $action == "get_note_list" ) {
     ns_getNoteList();
     }
@@ -119,6 +117,10 @@ else if( $action == "add_note" ) {
     }
 else if( $action == "update_note" ) {
     ns_updateNote();
+    }
+// web-ui implementations
+else if( $action == "list_notes" ) {
+    ns_listNotes();
     }
 else if( $action == "ns_setup" ) {
     global $setup_header, $setup_footer;
@@ -688,18 +690,18 @@ function ns_updateNote() {
 
 
 
-function ns_showData() {
+function ns_listNotes() {
     // call several of these global so they can be accessed properly
     // inside the sub-functions we define below
     global $password, $skip, $search, $order_by;
     
     
-    $password = ns_checkPassword( "show_data" );
+    $password = ns_checkPassword( "list_notes" );
 
     global $tableNamePrefix, $remoteIP;
     
 
-    echo "[<a href=\"server.php?action=show_data&password=$password" .
+    echo "[<a href=\"server.php?action=list_notes&password=$password" .
             "\">Main</a>]<br><br><br>";
 
 
@@ -715,7 +717,7 @@ function ns_showData() {
         $order_by = $_REQUEST[ "order_by" ];
         }
 
-    global $flagsPerPage;    
+    global $notesPerPage;    
 
 
     $search = "";
@@ -728,20 +730,8 @@ function ns_showData() {
     
     if( $search != "" ) {
         
-        /*
-        $keywordClause = "WHERE ( level_number LIKE '%$search%' " .
-            "OR level_seed LIKE '%$search%' ".
-            "OR change_ip_address LIKE '%$search%' ".
-            "OR flag_a LIKE '%$search%' ".
-            "OR flag_b LIKE '%$search%' ) ";
-        */
-        // switch to exact matches to avoid surprising cross-matches
-        // (searching for level 27 was matching IP address 127.0.0.1)
-        $keywordClause = "WHERE ( level_number LIKE '$search' " .
-            "OR level_seed LIKE '$search' ".
-            "OR change_ip_address LIKE '$search' ".
-            "OR flag_a LIKE '$search' ".
-            "OR flag_b LIKE '$search' ) ";
+        $keywordClause = "WHERE ( body_text LIKE '%$search%' " .
+            "OR uid LIKE '%$search%' ) ";
 
         $searchDisplay = " matching <b>$search</b>";
         }
@@ -750,41 +740,41 @@ function ns_showData() {
     
 
     // first, count results
-    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."flags $keywordClause;";
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."notes $keywordClause;";
 
     $result = ns_queryDatabase( $query );
-    $totalFlags = mysql_result( $result, 0, 0 );
+    $totalNotes = mysql_result( $result, 0, 0 );
 
     
              
-    $query = "SELECT * FROM $tableNamePrefix"."flags $keywordClause".
+    $query = "SELECT * FROM $tableNamePrefix"."notes $keywordClause".
         "ORDER BY $order_by DESC ".
-        "LIMIT $skip, $flagsPerPage;";
+        "LIMIT $skip, $notesPerPage;";
     $result = ns_queryDatabase( $query );
     
     $numRows = mysql_numrows( $result );
 
     $startSkip = $skip + 1;
     
-    $endSkip = $startSkip + $flagsPerPage - 1;
+    $endSkip = $startSkip + $notesPerPage - 1;
 
-    if( $endSkip > $totalFlags ) {
-        $endSkip = $totalFlags;
+    if( $endSkip > $totalNotes ) {
+        $endSkip = $totalNotes;
         }
     $showingDisplay = " (showing $startSkip - $endSkip)";
-    if( $totalFlags <= 1 ) {
+    if( $totalNotes <= 1 ) {
         $showingDisplay = "";
         }
     
 
 
 
-    // form for searching flags
+    // form for searching notes
 ?>
         <hr>
             <FORM ACTION="server.php" METHOD="post">
     <INPUT TYPE="hidden" NAME="password" VALUE="<?php echo $password;?>">
-    <INPUT TYPE="hidden" NAME="action" VALUE="show_data">
+    <INPUT TYPE="hidden" NAME="action" VALUE="list_notes">
     <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="search"
              VALUE="<?php echo $search;?>">
     <INPUT TYPE="Submit" VALUE="Search">
@@ -794,42 +784,39 @@ function ns_showData() {
 
     $recordWord = "records";
 
-    if( $totalFlags == 1 ) {
+    if( $totalNotes == 1 ) {
         $recordWord = "record";
         }
     
-    echo "$totalFlags flag $recordWord" .$searchDisplay .
+    echo "$totalNotes note $recordWord" .$searchDisplay .
         "$showingDisplay:<br>\n";
 
     
-    $nextSkip = $skip + $flagsPerPage;
+    $nextSkip = $skip + $notesPerPage;
 
-    $prevSkip = $skip - $flagsPerPage;
+    $prevSkip = $skip - $notesPerPage;
     
     if( $prevSkip >= 0 ) {
-        echo "[<a href=\"server.php?action=show_data&password=$password" .
+        echo "[<a href=\"server.php?action=list_notes&password=$password" .
             "&skip=$prevSkip&search=$search".
             "&order_by=$order_by\">Previous Page</a>] ";
         }
-    if( $nextSkip < $totalFlags ) {
-        echo "[<a href=\"server.php?action=show_data&password=$password" .
+    if( $nextSkip < $totalNotes ) {
+        echo "[<a href=\"server.php?action=list_notes&password=$password" .
             "&skip=$nextSkip&search=$search".
             "&order_by=$order_by\">Next Page</a>]";
         }
 
+
     /*
             "CREATE TABLE $tableName(" .
-            "level_number INT NOT NULL," .
-            "level_seed INT UNSIGNED NOT NULL," .
+            "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
+            "hash CHAR(32) NOT NULL," .
             "creation_date DATETIME NOT NULL," .
             "change_date DATETIME NOT NULL," .
-            "change_ip_address CHAR(15) NOT NULL," .
-            "change_count INT UNSIGNED NOT NULL," .
             "view_date DATETIME NOT NULL," .
-            "view_count INT UNSIGNED NOT NULL," .
-            "flag_a CHAR(9) NOT NULL," .
-            "flag_b CHAR(9) NOT NULL," .
-            "PRIMARY KEY( level_number, level_seed ) ) ENGINE = INNODB;";
+            "title_line VARCHAR(60) NOT NULL," .
+            "body_text LONGTEXT )";
     */
 
     
@@ -846,110 +833,46 @@ function ns_showData() {
             }
 
         // else show a link to switch to this order
-        return "<a href=\"server.php?action=show_data&password=$password" .
+        return "<a href=\"server.php?action=list_notes&password=$password" .
             "&search=$search&skip=$skip&order_by=$inOrderBy\">$inLinkText</a>";
         }
 
     echo "<tr>\n";
-    echo "<td>".orderLink( "level_number", "Level Number" )."</td>\n";
-    echo "<td>Level seed</td>\n";
-    echo "<td>Temporary flag</td>\n";
-    echo "<td>Permanent flag</td>\n";
+    echo "<td></td>\n";
     echo "<td>".orderLink( "creation_date", "Created" )."</td>\n";
     echo "<td>".orderLink( "change_date", "Changed" )."</td>\n";
-    echo "<td>Changed by</td>\n";
-    echo "<td>".orderLink( "change_count", "Changes" )."</td>\n";
+    echo "<td>".orderLink( "view_date", "Viewed" )."</td>\n";
     echo "</tr>\n";
+
+
+    function dateFormat( $inMysqlDate ) {
+        $dateStamp = strtotime( $inMysqlDate );
+
+        // format as in    Sunday, July 7, 2005 [4:52 pm]
+        $dateString = date( "l, F j, Y [g:i a]", $dateStamp );
+
+        return $dateString;
+        }
+    
     
 
-    function searchLink( $inString, $inLinkText ) {
-        global $password;
-        return "<a href=\"server.php?action=show_data&password=$password" .
-            "&search=$inString\">$inLinkText</a>";
-        }
-
     for( $i=0; $i<$numRows; $i++ ) {
-        $level_number = mysql_result( $result, $i, "level_number" );
-        $level_seed = mysql_result( $result, $i, "level_seed" );
+        $uid = mysql_result( $result, $i, "uid" );
+        $body_text = mysql_result( $result, $i, "body_text" );
+        $title_line = mysql_result( $result, $i, "title_line" );
         $creation_date = mysql_result( $result, $i, "creation_date" );
         $change_date = mysql_result( $result, $i, "change_date" );
-        $change_ip_address = mysql_result( $result, $i, "change_ip_address" );
-        $change_count = mysql_result( $result, $i, "change_count" );
-
-        $flag_a = mysql_result( $result, $i, "flag_a" );
-        $flag_b = mysql_result( $result, $i, "flag_b" );
-
-        $colorMap = array( "0" => "#DF2D00",
-                           "1" => "#31DD09",
-                           "2" => "#3838BB",
-                           "3" => "#FFF5DA",
-                           "4" => "#363636",
-                           "5" => "#FFDD00",
-                           "6" => "#4CD0D0",
-                           "7" => "#D400D3",
-                           "8" => "#E68700",
-                           "9" => "#7B19B1",
-                           "A" => "#5AFF8B",
-                           "B" => "#808080",
-                           "C" => "#7F4F00",
-                           "D" => "#1F7301",
-                           "E" => "#71001B",
-                           "F" => "#FF9FDA" );
+        $view_date = mysql_result( $result, $i, "view_date" );
         
-
-        $flags[0] = $flag_a;
-        $flags[1] = $flag_b;
-
-        $flagHTML[0] = "";
-        $flagHTML[1] = "";
-        
-        for( $f=0; $f<2; $f++ ) {
+        $creationString = dateFormat( $creation_date );
+        $changeString = dateFormat( $change_date );
+        $viewString = dateFormat( $view_date );
             
-            $flagHTML[$f] = searchLink( $flags[$f],
-                                        "(blank)" );
-
-            if( $flags[$f] != "BLANKFLAG" ) {
-                $flag_chars = str_split( $flags[$f] );
-                
-                $flagHTML[$f] =
-                 "<table border=0 bgcolor=black cellspacing=0 cellpadding=0>";
-                
-                for( $y=0; $y<3; $y++ ) {
-                    $flagHTML[$f] = $flagHTML[$f] . "<tr>";
-                    for( $x=0; $x<3; $x++ ) {
-                        $color = $colorMap[ $flag_chars[ $y * 3 + $x ] ];
-                        
-                        $flagHTML[$f] =
-                            $flagHTML[$f] .
-                            "<td bgcolor=$color>" .
-                            searchLink(
-                                $flags[$f],
-                                "<img border=0 src=\"flagBlank.png\">" ) .
-                            "</td>";
-                        }
-                    $flagHTML[$f] = $flagHTML[$f] . "</tr>";
-                    }
-                $flagHTML[$f] = $flagHTML[$f] . "</table>";
-                
-                }
-            }
-        
-        
-        
-
-
-        
         echo "<tr>\n";
-        echo "<td>".searchLink( $level_number, $level_number )."</td>\n";
-        echo "<td>".searchLink( $level_seed, $level_seed )."</td>\n";
-        echo "<td align=center>$flagHTML[1]</td>\n";
-        echo "<td align=center>$flagHTML[0]</td>\n";
-        echo "<td>$creation_date</td>\n";
-        echo "<td>$change_date</td>\n";
-        echo "<td>".
-            searchLink( $change_ip_address, $change_ip_address )."</td>\n";
-        
-        echo "<td align=right>$change_count</td>\n";
+        echo "<td>$title_line</td>\n";
+        echo "<td>$creationString</td>\n";
+        echo "<td>$changeString</td>\n";
+        echo "<td>$viewString</td>\n";
         echo "</tr>\n";
         
         }
