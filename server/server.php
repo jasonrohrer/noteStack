@@ -222,7 +222,7 @@ function ns_setupDatabase() {
         $query =
             "CREATE TABLE $tableName(" .
             "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
-            "hash CHAR(40) NOT NULL," .
+            "hash CHAR(32) NOT NULL," .
             "creation_date DATETIME NOT NULL," .
             "change_date DATETIME NOT NULL," .
             "view_date DATETIME NOT NULL," .
@@ -470,7 +470,7 @@ function ns_getNoteList() {
     /*
             "CREATE TABLE $tableName(" .
             "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
-            "hash CHAR(40) NOT NULL," .
+            "hash CHAR(32) NOT NULL," .
             "creation_date DATETIME NOT NULL," .
             "change_date DATETIME NOT NULL," .
             "view_date DATETIME NOT NULL," .
@@ -515,7 +515,7 @@ function ns_getNote() {
     /*
             "CREATE TABLE $tableName(" .
             "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
-            "hash CHAR(40) NOT NULL," .
+            "hash CHAR(32) NOT NULL," .
             "creation_date DATETIME NOT NULL," .
             "change_date DATETIME NOT NULL," .
             "view_date DATETIME NOT NULL," .
@@ -577,7 +577,7 @@ function ns_addNote() {
         die();
         }
 
-    $hash = sha1( $body_text );
+    $hash = md5( $body_text );
 
     
     $title_line = getTitleLine( $body_text );
@@ -590,7 +590,7 @@ function ns_addNote() {
     /*
             "CREATE TABLE $tableName(" .
             "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
-            "hash CHAR(40) NOT NULL," .
+            "hash CHAR(32) NOT NULL," .
             "creation_date DATETIME NOT NULL," .
             "change_date DATETIME NOT NULL," .
             "view_date DATETIME NOT NULL," .
@@ -640,7 +640,7 @@ function ns_updateNote() {
         die();
         }
 
-    $hash = sha1( $body_text );
+    $hash = md5( $body_text );
 
     $title_line = getTitleLine( $body_text );
         
@@ -652,7 +652,7 @@ function ns_updateNote() {
     /*
             "CREATE TABLE $tableName(" .
             "uid INT NOT NULL PRIMARY KEY AUTO_INCREMENT," .
-            "hash CHAR(40) NOT NULL," .
+            "hash CHAR(32) NOT NULL," .
             "creation_date DATETIME NOT NULL," .
             "change_date DATETIME NOT NULL," .
             "view_date DATETIME NOT NULL," .
@@ -668,9 +668,14 @@ function ns_updateNote() {
 
     $result = ns_queryDatabase( $query );
 
-    echo "$hash";
+    if( mysql_affected_rows() == 1 ) {
+        echo "$hash";
+        }
+    else {
+        echo "REJECTED";
+        }
+    
     }
-
 
 
 
