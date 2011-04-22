@@ -258,6 +258,10 @@ function ns_setupDatabase() {
 function ns_showLog() {
     $password = ns_checkPassword( "show_log" );
 
+    global $header, $footer;
+    
+    eval( $header );
+    
     ns_menuBar( $password, "" );
     
     global $tableNamePrefix;
@@ -281,6 +285,8 @@ function ns_showLog() {
         
         echo "<b>$time</b>:<br>$entry<hr>\n";
         }
+    
+    eval( $footer );
     }
 
 
@@ -289,6 +295,10 @@ function ns_clearLog() {
 
     $password = ns_checkPassword( "clear_log" );
 
+
+    global $header, $footer;
+    
+    eval( $header );
     ns_menuBar( $password, "" );
     
     global $tableNamePrefix;
@@ -302,6 +312,8 @@ function ns_clearLog() {
     else {
         echo "DELETE operation failed?";
         }
+
+    eval( $footer );
     }
 
 
@@ -740,7 +752,7 @@ function ns_menuBar( $password, $search ) {
     </FORM>
 <?php
 
-    echo "<br><br><br>";
+    echo "<br><br>";
 
     }
 
@@ -820,7 +832,9 @@ function ns_listNotes() {
         }
     
 
-
+    global $header, $footer;
+    
+    eval( $header );
     ns_menuBar( $password, $search );
 
 
@@ -930,6 +944,7 @@ function ns_listNotes() {
     echo "<hr>";
     echo "Generated for $remoteIP\n";
 
+    eval( $footer );
     }
 
 
@@ -1053,7 +1068,8 @@ function ns_editNote() {
     ns_menuBar( $password, "" );
     
     ?>
-     <FORM ACTION="server.php" METHOD="post">
+     <center>
+        <FORM ACTION="server.php" METHOD="post">
      <INPUT TYPE="hidden" NAME="action"
           VALUE="update_note">
      <INPUT TYPE="hidden" NAME="uid"
@@ -1062,10 +1078,11 @@ function ns_editNote() {
           VALUE="<?php echo $password; ?>">          
      <INPUT TYPE="hidden" NAME="from_web" VALUE="1">
 
-     <TEXTAREA NAME="body_text" COLS=50
-          ROWS=10><?php echo htmlspecialchars( $body_text ); ?></TEXTAREA>
+     <TEXTAREA NAME="body_text" COLS=90
+          ROWS=20><?php echo htmlspecialchars( $body_text ); ?></TEXTAREA>
      <br>
      <INPUT TYPE="Submit" VALUE="Update">
+      </center>
 <?php
     
     eval( $footer );
@@ -1099,6 +1116,7 @@ function ns_newNote() {
     ns_menuBar( $password, "" );
 
     ?>
+        <center>
      <FORM ACTION="server.php" METHOD="post">
      <INPUT TYPE="hidden" NAME="action"
           VALUE="add_note">
@@ -1106,9 +1124,10 @@ function ns_newNote() {
           VALUE="<?php echo $password; ?>">          
      <INPUT TYPE="hidden" NAME="from_web" VALUE="1">
 
-     <TEXTAREA NAME="body_text" COLS=50 ROWS=10></TEXTAREA>
+     <TEXTAREA NAME="body_text" COLS=90 ROWS=20></TEXTAREA>
      <br>
      <INPUT TYPE="Submit" VALUE="Create">
+     </center>        
 <?php
     
     eval( $footer );

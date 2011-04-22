@@ -4,6 +4,13 @@
 <title>noteStack</title>
 </head>
 
-<body text="#000000" bgcolor="#FFFFFF"
-      link="#888888" alink="#666666" vlink="#888888">
+<body text="#000000" bgcolor="#DDDDDD"
+      link="#000088" alink="#777777" vlink="#000088">
+
+
+<center>
+
+<table width=75% border=0>
+<tr><td>
+
 
