@@ -574,6 +574,7 @@ function ns_addNote() {
         }
     else {
         echo "REJECTED";
+        ns_log( "addNote failed due to missing body_text" );
         die();
         }
 
@@ -612,7 +613,7 @@ function ns_addNote() {
     $uid = mysql_insert_id();
 
 
-    echo "$uid";
+    echo "$uid $hash";
     }
 
 
@@ -628,6 +629,7 @@ function ns_updateNote() {
         }
     else {
         echo "REJECTED";
+        ns_log( "updateNote failed due to missing uid" );
         die();
         }
 
@@ -637,10 +639,12 @@ function ns_updateNote() {
         }
     else {
         echo "REJECTED";
+        ns_log( "updateNote failed due to missing body_text" );
         die();
         }
 
     $hash = md5( $body_text );
+
 
     $title_line = getTitleLine( $body_text );
         
@@ -673,6 +677,7 @@ function ns_updateNote() {
         }
     else {
         echo "REJECTED";
+        ns_log( "updateNote failed because query for uid $uid not found" );
         }
     
     }
