@@ -733,19 +733,25 @@ function ns_updateNote() {
 
 
 function ns_menuBar( $password, $search ) {
-?>
+
+    $order_by = "change_date";
+    if( isset( $_REQUEST[ "order_by" ] ) ) {
+        $order_by = $_REQUEST[ "order_by" ];
+        }
+    ?>
             <FORM ACTION="server.php" METHOD="post">
 <?php
     echo "[<a href=\"server.php?action=list_notes&password=$password" .
-        "\">Main</a>] --- ";
+        "&order_by=$order_by\">Main</a>] --- ";
     echo "[<a href=\"server.php?action=new_note&password=$password" .
-        "\">New</a>] --- ";
+        "&order_by=$order_by\">New</a>] --- ";
     
     // form for searching notes
 ?>
         
     <INPUT TYPE="hidden" NAME="password" VALUE="<?php echo $password;?>">
     <INPUT TYPE="hidden" NAME="action" VALUE="list_notes">
+    <INPUT TYPE="hidden" NAME="order_by" VALUE="<?php echo $order_by;?>">
     <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="search"
              VALUE="<?php echo $search;?>">
     <INPUT TYPE="Submit" VALUE="Search">
@@ -838,7 +844,15 @@ function ns_listNotes() {
     ns_menuBar( $password, $search );
 
 
+    $recordWord = "notes";
 
+    if( $totalNotes == 1 ) {
+        $recordWord = "note";
+        }
+    
+    echo "<center>$totalNotes $recordWord" .$searchDisplay .
+        "$showingDisplay</center>";
+    
 
     
     $nextSkip = $skip + $notesPerPage;
@@ -942,9 +956,10 @@ function ns_listNotes() {
         echo "<tr>\n";
         echo "<td><font size=6>".
             "<a href=\"server.php?action=view_note&uid=$uid&".
-            "password=$password\">$title_line</a></font></td>\n";
+            "password=$password&order_by=$order_by\">".
+            "$title_line</a></font></td>\n";
         echo "<td>[<a href=\"server.php?action=edit_note&uid=$uid&".
-                            "password=$password\">Edit</a>]</td>\n";
+            "password=$password&order_by=$order_by\">Edit</a>]</td>\n";
         echo "</tr>\n";
 
         $snippet = trim( $body_text );
@@ -965,17 +980,11 @@ function ns_listNotes() {
 
     echo $pageAndSortWidgets;
 
-    $recordWord = "notes";
-
-    if( $totalNotes == 1 ) {
-        $recordWord = "note";
-        }
     
-    echo "<center>$totalNotes $recordWord" .$searchDisplay .
-        "$showingDisplay</center>";
+
 
     
-    echo "<table border=0 width=100%><tr><td align=right>";
+    echo "<br><table border=0 width=100%><tr><td align=right>";
     echo "<a href=\"server.php?action=show_log&password=$password\">".
         "Log</a>";
     echo "</td></tr></table>";
@@ -1046,8 +1055,12 @@ function ns_viewNote() {
 
     echo "[<a href=\"server.php?action=edit_note&uid=$uid&password=$password" .
         "\">Edit</a>]<br>";
-    
+
+    echo "<table border=0 width=100% cellpadding=10>".
+        "<tr><td bgcolor='#EEEEEE'>";
     echo $formattedText;
+    echo "</td></tr></table>";
+    
     eval( $footer );
 
     // viewed
