@@ -966,7 +966,7 @@ function ns_listNotes() {
             "password=$password&order_by=$order_by\">Edit</a>]</td>\n";
         echo "</tr>\n";
 
-        $snippet = trim( htmlspecialchars( $body_text ) );
+        $snippet = trim( $body_text );
         
         if( strlen( $snippet ) > 250 ) {
             // trim it to a snippet
@@ -974,7 +974,8 @@ function ns_listNotes() {
             $snippet = trim( substr( $snippet, 0, 250 ) );
             $snippet = $snippet . "...";
         }
-        
+        $snippet = htmlspecialchars( $snippet );
+                
         echo "<tr>\n";
         echo "<td colspan=2>$snippet<br><br><br><br><br></td>\n";
         echo "</tr>\n";
