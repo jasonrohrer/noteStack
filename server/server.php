@@ -567,7 +567,7 @@ function ns_getNote() {
 
 
 function getTitleLine( $inBodyText ) {
-    $pieces = explode("\n", trim( $inBodyText ), 2 );
+    $pieces = explode("\n", trim( htmlspecialchars( $inBodyText ) ), 2 );
 
     $title_line = "";
     
@@ -966,7 +966,7 @@ function ns_listNotes() {
             "password=$password&order_by=$order_by\">Edit</a>]</td>\n";
         echo "</tr>\n";
 
-        $snippet = trim( $body_text );
+        $snippet = trim( htmlspecialchars( $body_text ) );
         
         if( strlen( $snippet ) > 250 ) {
             // trim it to a snippet
@@ -1048,7 +1048,8 @@ function ns_viewNote() {
     $changed = dateFormat( mysql_result( $result, 0, "change_date" ) );
 
 
-    $formattedText = preg_replace( "/\n\s*/", "<br><br>", $body_text );
+    $formattedText = preg_replace( "/\n\s*/", "<br><br>",
+                                   htmlspecialchars( $body_text ) );
 
     $formattedText =
         preg_replace( "/(http:\/\/\S+)/", "<a href=\"$1\">$1</a>", $formattedText );
