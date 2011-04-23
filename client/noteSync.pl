@@ -231,8 +231,33 @@ foreach $localNote ( @localNotes ) {
 }
 
 
-
 print "\nSync done.\n\n";
+
+#########
+# Finally:  Print server-side report.
+#########
+
+
+$serverNoteList = serverPost( [ action => "get_note_list" ] );
+
+@noteArray = split( /\n/, $serverNoteList );
+
+print "Note set on server (most recently changed first):\n";
+
+foreach my $noteInfo ( @noteArray ) {
+	
+	( my $uid, my $hash ) = split( /\s+/ , $noteInfo );
+	
+	
+	$nameFile = $uid . ".name";
+	
+	if( doesDataFileExist( $nameFile ) ) {
+		$localNote = readDataFile( $nameFile );
+		print "  $localNote\n";
+	}
+}
+
+print "End of list.\n\n";
 
 
 

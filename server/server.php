@@ -504,7 +504,8 @@ function ns_getNoteList() {
     */
 
     
-    $query = "SELECT uid, hash FROM $tableNamePrefix"."notes ";
+    $query = "SELECT uid, hash FROM $tableNamePrefix"."notes ".
+        "ORDER BY change_date DESC";
     $result = ns_queryDatabase( $query );
 
     $numRows = mysql_numrows( $result );
