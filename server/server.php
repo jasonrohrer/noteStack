@@ -576,7 +576,7 @@ function getTitleLine( $inBodyText ) {
         $title_line = $pieces[0];
         }
 
-    if( strlen( $title_line > 60 ) ) {
+    if( strlen( $title_line ) > 60 ) {
         // trim it more
         
         $title_line = substr( $title_line, 0, 57 );
@@ -910,7 +910,7 @@ function ns_listNotes() {
     
     echo "";
     
-    echo "<table border=1 cellpadding=5>\n";
+    echo "<table border=0 cellpadding=5>\n";
 
 
     
@@ -940,11 +940,24 @@ function ns_listNotes() {
         $viewString = dateFormat( $view_date );
             
         echo "<tr>\n";
-        echo "<td><a href=\"server.php?action=view_note&uid=$uid&".
-                            "password=$password\">$title_line</a></td>\n";
-        echo "<td>$creationString</td>\n";
-        echo "<td>$changeString</td>\n";
-        echo "<td>$viewString</td>\n";
+        echo "<td><font size=6>".
+            "<a href=\"server.php?action=view_note&uid=$uid&".
+            "password=$password\">$title_line</a></font></td>\n";
+        echo "<td>[<a href=\"server.php?action=edit_note&uid=$uid&".
+                            "password=$password\">Edit</a>]</td>\n";
+        echo "</tr>\n";
+
+        $snippet = trim( $body_text );
+        
+        if( strlen( $snippet ) > 250 ) {
+            // trim it to a snippet
+        
+            $snippet = trim( substr( $snippet, 0, 250 ) );
+            $snippet = $snippet . "...";
+        }
+        
+        echo "<tr>\n";
+        echo "<td colspan=2>$snippet<br><br><br></td>\n";
         echo "</tr>\n";
         
         }
@@ -1019,8 +1032,11 @@ function ns_viewNote() {
     $body_text = mysql_result( $result, 0, "body_text" );
 
 
-    $formattedText = preg_replace( "/\n+/", "<br><br>", $body_text );
+    $formattedText = preg_replace( "/\n\s*/", "<br><br>", $body_text );
 
+    $formattedText =
+        preg_replace( "/(http:\/\/\S+)/", "<a href=\"$1\">$1</a>", $formattedText );
+    
     global $header, $footer;
     
     eval( $header );
@@ -1033,6 +1049,12 @@ function ns_viewNote() {
     
     echo $formattedText;
     eval( $footer );
+
+    // viewed
+    $query = "UPDATE $tableNamePrefix". "notes SET ".
+        "view_date = CURRENT_TIMESTAMP WHERE uid = '$uid';";
+
+    $result = ns_queryDatabase( $query );
     }
 
 
