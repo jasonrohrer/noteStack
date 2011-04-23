@@ -567,7 +567,7 @@ function ns_getNote() {
 
 
 function getTitleLine( $inBodyText ) {
-    $pieces = explode("\n", $inBodyText, 2 );
+    $pieces = explode("\n", trim( $inBodyText ), 2 );
 
     $title_line = "";
     
@@ -934,7 +934,7 @@ function ns_listNotes() {
     
     echo "";
     
-    echo "<table border=0 cellpadding=5>\n";
+    echo "<table border=0 cellpadding=5 cellspacing=0>\n";
 
 
     
@@ -956,12 +956,13 @@ function ns_listNotes() {
         $changeString = dateFormat( $change_date );
         $viewString = dateFormat( $view_date );
             
-        echo "<tr>\n";
+        echo "<tr bgcolor=#CCCCCC>\n";
         echo "<td><font size=6>".
             "<a href=\"server.php?action=view_note&uid=$uid&".
             "password=$password&order_by=$order_by\">".
             "$title_line</a></font></td>\n";
-        echo "<td>[<a href=\"server.php?action=edit_note&uid=$uid&".
+        echo "<td align=right>".
+            "[<a href=\"server.php?action=edit_note&uid=$uid&".
             "password=$password&order_by=$order_by\">Edit</a>]</td>\n";
         echo "</tr>\n";
 
@@ -975,7 +976,7 @@ function ns_listNotes() {
         }
         
         echo "<tr>\n";
-        echo "<td colspan=2>$snippet<br><br><br></td>\n";
+        echo "<td colspan=2>$snippet<br><br><br><br><br></td>\n";
         echo "</tr>\n";
         
         }
@@ -1068,8 +1069,8 @@ function ns_viewNote() {
     echo "</td></tr></table>";
 
     echo "<br><table border=0 width=100%><tr>";
-    echo "<td align=left>Created $created</td>";
-    echo "<td align=right>Changed $changed</td>";
+    echo "<td align=left>Created | $created</td>";
+    echo "<td align=right>Changed | $changed</td>";
     echo "</tr></table>";
     
 
