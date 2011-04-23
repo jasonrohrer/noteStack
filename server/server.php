@@ -731,6 +731,16 @@ function ns_updateNote() {
 
 
 
+function dateFormat( $inMysqlDate ) {
+    $dateStamp = strtotime( $inMysqlDate );
+    
+    // format as in    Sunday, July 7, 2005 [4:52 pm]
+    $dateString = date( "l, F j, Y [g:i a]", $dateStamp );
+    
+    return $dateString;
+    }
+
+
 
 function ns_menuBar( $password, $search ) {
 
@@ -930,14 +940,7 @@ function ns_listNotes() {
     
 
 
-    function dateFormat( $inMysqlDate ) {
-        $dateStamp = strtotime( $inMysqlDate );
 
-        // format as in    Sunday, July 7, 2005 [4:52 pm]
-        $dateString = date( "l, F j, Y [g:i a]", $dateStamp );
-
-        return $dateString;
-        }
     
     
 
@@ -1023,7 +1026,8 @@ function ns_viewNote() {
     */
 
     
-    $query = "SELECT body_text FROM $tableNamePrefix"."notes ".
+    $query = "SELECT body_text, creation_date, change_date ".
+        "FROM $tableNamePrefix"."notes ".
         "WHERE uid = '$uid'";
     $result = ns_queryDatabase( $query );
 
@@ -1039,6 +1043,8 @@ function ns_viewNote() {
 
     
     $body_text = mysql_result( $result, 0, "body_text" );
+    $created = dateFormat( mysql_result( $result, 0, "creation_date" ) );
+    $changed = dateFormat( mysql_result( $result, 0, "change_date" ) );
 
 
     $formattedText = preg_replace( "/\n\s*/", "<br><br>", $body_text );
@@ -1060,7 +1066,14 @@ function ns_viewNote() {
         "<tr><td bgcolor='#EEEEEE'>";
     echo $formattedText;
     echo "</td></tr></table>";
+
+    echo "<br><table border=0 width=100%><tr>";
+    echo "<td align=left>Created $created</td>";
+    echo "<td align=right>Changed $changed</td>";
+    echo "</tr></table>";
     
+
+                           
     eval( $footer );
 
     // viewed
