@@ -18,6 +18,8 @@ my $ua = new LWP::UserAgent;
 
 
 
+my $reportName = "sync_report.txt";
+
 
 my $url = "";
 my $password = "";
@@ -212,7 +214,10 @@ foreach my $noteInfo ( @noteArray ) {
 my @localNotes = glob "*.txt";
 foreach $localNote ( @localNotes ) {
 
-	if( ! doesDataFileExist( $localNote . ".uid" ) ) {
+	
+	if( $localNote ne $reportName and
+		! doesDataFileExist( $localNote . ".uid" ) ) {
+		
 		print "-- $localNote  is new locally\n";
 
 		$noteFileContents = readFile( $localNote );
@@ -233,16 +238,25 @@ foreach $localNote ( @localNotes ) {
 
 print "\nSync done.\n\n";
 
+
+
 #########
 # Finally:  Print server-side report.
 #########
+
+
+
+print "Writing server state report to '$reportName'...\n";
+
+
+open( REPORT_FILE, ">$reportName" ) or die;
 
 
 $serverNoteList = serverPost( [ action => "get_note_list" ] );
 
 @noteArray = split( /\n/, $serverNoteList );
 
-print "Note set on server (most recently changed first):\n";
+print REPORT_FILE "Note set on server (most recently viewed first):\n\n";
 
 foreach my $noteInfo ( @noteArray ) {
 	
@@ -253,11 +267,24 @@ foreach my $noteInfo ( @noteArray ) {
 	
 	if( doesDataFileExist( $nameFile ) ) {
 		$localNote = readDataFile( $nameFile );
-		print "  $localNote\n";
+		print REPORT_FILE "$localNote\n";
+		print REPORT_FILE "===========\n";
+		
+
+		$noteContents = readFile( $localNote );
+		
+
+		@noteLines = split( /\n/, $noteContents );
+		
+		if( $#noteLines > 0 ) { 
+			print REPORT_FILE $noteLines[0];
+			print REPORT_FILE "\n\n\n";
+		}		
 	}
 }
 
-print "End of list.\n\n";
+print "Report done.\n\n";
+
 
 
 
