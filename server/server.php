@@ -505,7 +505,7 @@ function ns_getNoteList() {
 
     
     $query = "SELECT uid, hash FROM $tableNamePrefix"."notes ".
-        "ORDER BY change_date DESC";
+        "ORDER BY view_date DESC";
     $result = ns_queryDatabase( $query );
 
     $numRows = mysql_numrows( $result );
@@ -745,7 +745,7 @@ function dateFormat( $inMysqlDate ) {
 
 function ns_menuBar( $password, $search ) {
 
-    $order_by = "change_date";
+    $order_by = "view_date";
     if( isset( $_REQUEST[ "order_by" ] ) ) {
         $order_by = $_REQUEST[ "order_by" ];
         }
@@ -794,7 +794,7 @@ function ns_listNotes() {
         $skip = $_REQUEST[ "skip" ];
         }
 
-    $order_by = "change_date";
+    $order_by = "view_date";
     if( isset( $_REQUEST[ "order_by" ] ) ) {
         $order_by = $_REQUEST[ "order_by" ];
         }
