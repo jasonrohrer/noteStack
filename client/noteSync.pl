@@ -280,17 +280,36 @@ foreach my $noteInfo ( @noteArray ) {
 		
 		if( $#noteLines > 0 ) {
 	 
+			# first, a note title line
 			$line = $noteLines[0];
 			
 			# trim whitespace from end, not just chomp (because it might
 			# have non-standard line ends like \r) 
 			$line =~ s/\s+$//;
 						
-			$line = substr( $line, 0, 250 );
+			$line = substr( $line, 0, 60 );
 			
-			print REPORT_FILE $line; 
+			print REPORT_FILE "-- " . $line . " --\n"; 
+
+
+			# now print a note summary
+			$noteSummary = $noteContents;
+
+			# remove DOS line ends
+			$noteSummary =~ s/\r//g;
+
+			# replace paragraph breaks with "  "
+			$noteSummary =~ s/\n+/  /g;
+
+			# remove big blobs of whitespace
+			$noteSummary =~ s/\s\s+/  /g;
+
+			# limit to 250 characters
+			$noteSummary = substr( $noteSummary, 0, 250 );
+			
+			print REPORT_FILE $noteSummary; 			
 		}		
-		print REPORT_FILE "\n\n\n";
+		print REPORT_FILE "\n\n\n\n";
 
 	}
 }
