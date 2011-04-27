@@ -604,6 +604,11 @@ function ns_addNote() {
         die();
         }
 
+
+    // convert incoming dos line ends to unix
+    $body_text = preg_replace( "/\r/", "", $body_text );
+        
+    
     $from_web = 0;
     if( isset( $_REQUEST[ "from_web" ] ) ) {
         $from_web = $_REQUEST[ "from_web" ];
@@ -679,6 +684,10 @@ function ns_updateNote() {
         ns_log( "updateNote failed due to missing body_text" );
         die();
         }
+
+    // convert incoming dos line ends to unix
+    $body_text = preg_replace( "/\r/", "", $body_text );
+
 
     $from_web = 0;
     if( isset( $_REQUEST[ "from_web" ] ) ) {

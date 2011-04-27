@@ -273,13 +273,25 @@ foreach my $noteInfo ( @noteArray ) {
 
 		$noteContents = readFile( $localNote );
 		
+		$noteContents =~ s/^\s+//;
+		$noteContents =~ s/\s+$//;
 
 		@noteLines = split( /\n/, $noteContents );
 		
-		if( $#noteLines > 0 ) { 
-			print REPORT_FILE $noteLines[0];
-			print REPORT_FILE "\n\n\n";
+		if( $#noteLines > 0 ) {
+	 
+			$line = $noteLines[0];
+			
+			# trim whitespace from end, not just chomp (because it might
+			# have non-standard line ends like \r) 
+			$line =~ s/\s+$//;
+						
+			$line = substr( $line, 0, 250 );
+			
+			print REPORT_FILE $line; 
 		}		
+		print REPORT_FILE "\n\n\n";
+
 	}
 }
 
