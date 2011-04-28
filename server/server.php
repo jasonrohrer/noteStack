@@ -320,169 +320,6 @@ function ns_clearLog() {
 
 
 
-
-function ns_placeFlag() {
-    $level_number = "";
-    if( isset( $_REQUEST[ "level_number" ] ) ) {
-        $level_number = $_REQUEST[ "level_number" ];
-        }
-    $level_seed = "";
-    if( isset( $_REQUEST[ "level_seed" ] ) ) {
-        $level_seed = $_REQUEST[ "level_seed" ];
-        }
-    $spot = "";
-    if( isset( $_REQUEST[ "spot" ] ) ) {
-        $spot = $_REQUEST[ "spot" ];
-        }
-    $flag = "";
-    if( isset( $_REQUEST[ "flag" ] ) ) {
-        $flag = $_REQUEST[ "flag" ];
-        }
-    $sig = "";
-    if( isset( $_REQUEST[ "sig" ] ) ) {
-        $sig = $_REQUEST[ "sig" ];
-        }
-
-    $sig = strtoupper( $sig );
-
-
-    if( strlen( $flag ) != 9 ) {
-        echo "REJECTED";
-        return;
-        }
-
-
-    // verify sig
-            
-    global $sharedSecret;
-            
-    $trueSig =
-        sha1( $level_number . $level_seed . $spot . $flag . $sharedSecret );
-    
-    $trueSig = strtoupper( $trueSig );
-
-
-    if( $trueSig != $sig ) {
-        echo "REJECTED";
-        return;
-        }
-    
-    // else sig good
-    
-    global $tableNamePrefix, $remoteIP;
-
-    
-    // disable autocommit so that FOR UPDATE actually works
-    ns_queryDatabase( "SET AUTOCOMMIT = 0;" );
-    
-
-    /*
-            "CREATE TABLE $tableName(" .
-            "level_number INT NOT NULL," .
-            "level_seed INT UNSIGNED NOT NULL," .
-            "creation_date DATETIME NOT NULL," .
-            "change_date DATETIME NOT NULL," .
-            "change_ip_address CHAR(15) NOT NULL," .
-            "change_count INT UNSIGNED NOT NULL," .
-            "view_date DATETIME NOT NULL," .
-            "view_count INT UNSIGNED NOT NULL," .
-            "flag_a CHAR(9) NOT NULL," .
-            "flag_b CHAR(9) NOT NULL," .
-            "PRIMARY KEY( level_number, level_seed ) ) ENGINE = INNODB;";
-    */
-
-    
-    $query = "SELECT * FROM $tableNamePrefix"."flags ".
-        "WHERE level_number = '$level_number' AND level_seed = '$level_seed' ".
-        "FOR UPDATE;";
-    $result = ns_queryDatabase( $query );
-
-    $numRows = mysql_numrows( $result );
-
-    if( $numRows == 1 ) {
-        $row = mysql_fetch_array( $result, MYSQL_ASSOC );
-        
-        $old_flag_a = $row[ "flag_a" ];
-
-        if( $spot == "A" && $old_flag_a != "BLANKFLAG" ) {
-            // already a permanent flag here
-
-            // unlock rows that were locked by FOR UPDATE above
-            ns_queryDatabase( "COMMIT;" );
-            
-            ns_queryDatabase( "SET AUTOCOMMIT = 1;" );
-
-            echo "REJECTED";
-            return;
-            }
-
-        $change_count = $row[ "change_count" ];
-        $change_count ++;
-        
-        
-        $flagClause;
-
-        if( $spot == "A" ) {
-            $flagClause = "flag_a = '$flag'";
-            }
-        else {
-            $flagClause = "flag_b = '$flag'";
-            }
-
-        
-        
-        
-        $query = "UPDATE $tableNamePrefix"."flags SET " .
-            "change_date = CURRENT_TIMESTAMP, " .
-            "change_ip_address = '$remoteIP', " .
-            "change_count = '$change_count', " .
-            "$flagClause " .
-            "WHERE level_number = '$level_number' AND ".
-            "level_seed = '$level_seed';";
-        
-        $result = ns_queryDatabase( $query );
-
-
-        echo "OK";
-        }
-    else {
-        // doesn't exist yet
-
-        $flagClause;
-
-        if( $spot == "A" ) {
-            $flagClause = "'$flag', 'BLANKFLAG'"; 
-           }
-        else {
-            $flagClause = "'BLANKFLAG', '$flag'";
-            }
-        
-        $query = "INSERT INTO $tableNamePrefix". "flags VALUES ( " .
-            "'$level_number', '$level_seed', ".
-            "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ".
-            "'$remoteIP', '1', CURRENT_TIMESTAMP, '0', ".
-            "$flagClause );";
-
-        $result = ns_queryDatabase( $query );
-
-        echo "OK";
-        }
-
-    /*
-http://localhost/jcr13/game10_flag/server.php?action=place_flag&level_number=5&level_seed=234890902&spot=A&flag=FA89&sig=ba48acc4f3603c16f5629404470dbad0eaaec7cd
-     */
-
-    // unlock rows that were locked by FOR UPDATE above
-    ns_queryDatabase( "COMMIT;" );
-    
-    ns_queryDatabase( "SET AUTOCOMMIT = 1;" );
-    }
-
-
-
-
-
-
 function ns_getNoteList() {
 
     ns_checkPassword( "get_note" );
@@ -568,7 +405,7 @@ function ns_getNote() {
 
 
 function getTitleLine( $inBodyText ) {
-    $pieces = explode("\n", trim( htmlspecialchars( $inBodyText ) ), 2 );
+    $pieces = explode("\n", trim( $inBodyText ), 2 );
 
     $title_line = "";
     
@@ -693,9 +530,13 @@ function ns_updateNote() {
     if( isset( $_REQUEST[ "from_web" ] ) ) {
         $from_web = $_REQUEST[ "from_web" ];
         }
-    
-    $hash = md5( $body_text );
 
+    $pure_body_text = stripslashes( $body_text );
+    
+    $hash = md5( $pure_body_text );
+
+    ns_log( "md5 of '$pure_body_text' is $hash" );
+    
 
     $title_line = getTitleLine( $body_text );
         
@@ -965,7 +806,9 @@ function ns_listNotes() {
         $creationString = dateFormat( $creation_date );
         $changeString = dateFormat( $change_date );
         $viewString = dateFormat( $view_date );
-            
+
+        $title_line = htmlspecialchars( $title_line );
+        
         echo "<tr bgcolor=#CCCCCC>\n";
         echo "<td><font size=6>".
             "<a href=\"server.php?action=view_note&uid=$uid&".
@@ -981,7 +824,7 @@ function ns_listNotes() {
         if( strlen( $snippet ) > 250 ) {
             // trim it to a snippet
         
-            $snippet = trim( substr( $snippet, 0, 250 ) );
+            $snippet = trim( substr( $snippet, 0, 247 ) );
             $snippet = $snippet . "...";
         }
         $snippet = htmlspecialchars( $snippet );
