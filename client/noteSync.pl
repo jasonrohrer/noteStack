@@ -107,7 +107,14 @@ foreach $nameFile ( @nameFiles ) {
     $hashFileName = $noteFileName . ".hash";
 
 	
-    if( dataFileModTime( $hashFileName ) < fileModTime( $noteFileName ) ) {
+	if( !doesFileExist( $noteFileName ) ) {
+		# file missing
+
+		# clear hash so that it will be fetched for sure in update step below
+		
+		writeDataFile( $hashFileName, "file_missing" );
+	}
+    elsif( dataFileModTime( $hashFileName ) < fileModTime( $noteFileName ) ) {
 		
 		$noteFileContents = readFile( $noteFileName );
 		
@@ -162,7 +169,7 @@ foreach my $noteInfo ( @noteArray ) {
 
 		# try uid.txt first
 
-		$localName = $uid . ".txt";
+		$localName = sprintf( "%06d", $uid ) . ".txt";
 
 		while( doesFileExist( $localName ) ) {
 			
@@ -256,7 +263,7 @@ $serverNoteList = serverPost( [ action => "get_note_list" ] );
 
 @noteArray = split( /\n/, $serverNoteList );
 
-print REPORT_FILE "Note set on server (most recently viewed first):\n\n";
+print REPORT_FILE "Note set on server (most recently viewed first):\n\n\n";
 
 foreach my $noteInfo ( @noteArray ) {
 	
@@ -278,7 +285,7 @@ foreach my $noteInfo ( @noteArray ) {
 
 		@noteLines = split( /\n/, $noteContents );
 		
-		if( $#noteLines > 0 ) {
+		if( scalar( @noteLines ) > 0 ) {
 	 
 			# first, a note title line
 			$line = $noteLines[0];
@@ -286,10 +293,12 @@ foreach my $noteInfo ( @noteArray ) {
 			# trim whitespace from end, not just chomp (because it might
 			# have non-standard line ends like \r) 
 			$line =~ s/\s+$//;
-						
-			$line = substr( $line, 0, 60 );
+				
+			if( length( $line ) > 60 ) {
+				$line = substr( $line, 0, 57 ) . "...";
+			}
 			
-			print REPORT_FILE "-- " . $line . " --\n"; 
+			print REPORT_FILE "-- " . $line . " --\n\n"; 
 
 
 			# now print a note summary
@@ -305,11 +314,13 @@ foreach my $noteInfo ( @noteArray ) {
 			$noteSummary =~ s/\s\s+/  /g;
 
 			# limit to 250 characters
-			$noteSummary = substr( $noteSummary, 0, 250 );
+			if( length( $noteSummary ) > 250 ) {
+				$noteSummary = substr( $noteSummary, 0, 247 ) . "...";
+			}
 			
 			print REPORT_FILE $noteSummary; 			
 		}		
-		print REPORT_FILE "\n\n\n\n";
+		print REPORT_FILE "\n\n\n\n\n";
 
 	}
 }
