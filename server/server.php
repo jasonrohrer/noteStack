@@ -535,7 +535,7 @@ function ns_updateNote() {
     
     $hash = md5( $pure_body_text );
 
-    ns_log( "md5 of '$pure_body_text' is $hash" );
+    //ns_log( "md5 of '$pure_body_text' is $hash" );
     
 
     $title_line = getTitleLine( $body_text );
