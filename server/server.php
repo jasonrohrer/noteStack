@@ -900,13 +900,17 @@ function ns_viewNote() {
     $body_text = mysql_result( $result, 0, "body_text" );
     $created = dateFormat( mysql_result( $result, 0, "creation_date" ) );
     $changed = dateFormat( mysql_result( $result, 0, "change_date" ) );
-
-
-    $formattedText = preg_replace( "/\n\s*/", "<br><br>",
-                                   htmlspecialchars( $body_text ) );
-
+    
+    
     $formattedText =
-        preg_replace( "/(http:\/\/\S+)/", "<a href=\"$1\">$1</a>", $formattedText );
+        preg_replace(
+            "/(http:\/\/\S+)/", "<a href=\"$1\">$1</a>",
+            htmlspecialchars( $body_text ) );
+    
+    $formattedText = preg_replace( "/\n\s*/", "\n<br><br>\n",
+                                   $formattedText );
+
+
     
     global $header, $footer;
     
