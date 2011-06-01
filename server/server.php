@@ -451,8 +451,9 @@ function ns_addNote() {
         $from_web = $_REQUEST[ "from_web" ];
         }
 
+    $pure_body_text = stripslashes( $body_text );
     
-    $hash = md5( $body_text );
+    $hash = md5( $pure_body_text );
 
     
     $title_line = getTitleLine( $body_text );
