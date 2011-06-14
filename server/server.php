@@ -828,6 +828,19 @@ function ns_listNotes() {
             $snippet = trim( substr( $snippet, 0, 247 ) );
             $snippet = $snippet . "...";
         }
+
+
+        // break up any URLs in the snippet that are too long and would
+        // induce table widening
+        // ONLY breaks each URL once, so it won't help on REALLY long URLS.
+        // don't apply to quoted URLs, because those are probably
+        // part of an <a href="URL"> syntax
+
+        $snippet =
+            preg_replace( "/([^\"])(http:\/\/\S{60})/",
+                          "$1$2 ",
+                          $snippet );        
+        
         $snippet = htmlspecialchars( $snippet );
                 
         echo "<tr>\n";
@@ -907,6 +920,17 @@ function ns_viewNote() {
         preg_replace(
             "/(http:\/\/\S+)/", "<a href=\"$1\">$1</a>",
             htmlspecialchars( $body_text ) );
+
+    // break up any URLs in the snippet that are too long and would
+    // induce table widening
+    // ONLY breaks each URL once, so it won't help on REALLY long URLS.
+    // don't apply to quoted URLs, because those are probably
+    // part of an <a href="URL"> syntax
+
+    $formattedText =
+        preg_replace( "/([^\"])(http:\/\/\S{60})/",
+                      "$1$2 ",
+                      $formattedText );
     
     $formattedText = preg_replace( "/\n\s*/", "\n<br><br>\n",
                                    $formattedText );
