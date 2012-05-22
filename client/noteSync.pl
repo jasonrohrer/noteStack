@@ -36,7 +36,7 @@ if( not -e "NOTE_DATA" ) {
 			print "Checkout usage:\n";
 			print "  noteSync.pl server_url\n\n";
 			print "Example:\n";
-			print "  bulk.pl http://test.com/noteServer/server.php\n";
+			print "  noteSync.pl http://test.com/noteServer/server.php\n";
 			exit 1;
 		}
 
