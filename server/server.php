@@ -133,6 +133,9 @@ else if( $action == "edit_note" ) {
 else if( $action == "new_note" ) {
     ns_newNote();
     }
+else if( $action == "logout" ) {
+    ns_logout();
+    }
 
 // setup
 else if( $action == "ns_setup" ) {
@@ -256,22 +259,22 @@ function ns_setupDatabase() {
 
 
 function ns_showLog() {
-    $password = ns_checkPassword( "show_log" );
+    ns_checkPassword( "show_log" );
 
     global $header, $footer;
     
     eval( $header );
     
-    ns_menuBar( $password, "" );
+    ns_menuBar( "" );
     
     global $tableNamePrefix;
     
-    $query = "SELECT * FROM $tableNamePrefix"."log;";
+    $query = "SELECT * FROM $tableNamePrefix"."log ORDER BY entry_time DESC;";
     $result = ns_queryDatabase( $query );
     
     $numRows = mysql_numrows( $result );
 
-    echo "<a href=\"server.php?action=clear_log&password=$password\">".
+    echo "<a href=\"server.php?action=clear_log\">".
         "Clear log</a>";
         
     echo "<hr>";
@@ -293,13 +296,13 @@ function ns_showLog() {
 
 function ns_clearLog() {
 
-    $password = ns_checkPassword( "clear_log" );
+    ns_checkPassword( "clear_log" );
 
 
     global $header, $footer;
     
     eval( $header );
-    ns_menuBar( $password, "" );
+    ns_menuBar( "" );
     
     global $tableNamePrefix;
 
@@ -594,31 +597,37 @@ function dateFormat( $inMysqlDate ) {
 
 
 
-function ns_menuBar( $password, $search ) {
+function ns_menuBar( $search ) {
 
     $order_by = "view_date";
     if( isset( $_REQUEST[ "order_by" ] ) ) {
         $order_by = $_REQUEST[ "order_by" ];
         }
     ?>
-            <FORM ACTION="server.php" METHOD="post">
+            <table border=0 width="100%"><tr><td valign=top>
 <?php
-    echo "[<a href=\"server.php?action=list_notes&password=$password" .
+    echo "[<a href=\"server.php?action=list_notes" .
         "&order_by=$order_by\">Main</a>] --- ";
-    echo "[<a href=\"server.php?action=new_note&password=$password" .
-        "&order_by=$order_by\">New</a>] --- ";
+    echo "[<a href=\"server.php?action=new_note" .
+        "&order_by=$order_by\">New</a>]</td><td valign=top>";
     
     // form for searching notes
 ?>
+            <FORM ACTION="server.php" METHOD="post">
+
         
-    <INPUT TYPE="hidden" NAME="password" VALUE="<?php echo $password;?>">
     <INPUT TYPE="hidden" NAME="action" VALUE="list_notes">
     <INPUT TYPE="hidden" NAME="order_by" VALUE="<?php echo $order_by;?>">
     <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="search"
              VALUE="<?php echo $search;?>">
     <INPUT TYPE="Submit" VALUE="Search">
     </FORM>
+    </td>
+    <td align=right valign=top>
 <?php
+
+    echo "[<a href=\"server.php?action=logout" .
+        "\">Logout</a>]</td></tr></table>";
 
     echo "<br><br>";
 
@@ -626,14 +635,22 @@ function ns_menuBar( $password, $search ) {
 
 
 
+function ns_logout() {
+
+    ns_clearPasswordCookie();
+
+    echo "Logged out";
+    }
+
+
 
 function ns_listNotes() {
     // call several of these global so they can be accessed properly
     // inside the sub-functions we define below
-    global $password, $skip, $search, $order_by;
+    global $skip, $search, $order_by;
     
     
-    $password = ns_checkPassword( "list_notes" );
+    ns_checkPassword( "list_notes" );
 
     global $tableNamePrefix, $remoteIP;    
 
@@ -703,7 +720,7 @@ function ns_listNotes() {
     global $header, $footer;
     
     eval( $header );
-    ns_menuBar( $password, $search );
+    ns_menuBar( $search );
 
 
     $recordWord = "notes";
@@ -731,12 +748,12 @@ function ns_listNotes() {
     echo "<td align=left>";
     
     if( $prevSkip >= 0 ) {
-        echo "[<a href=\"server.php?action=list_notes&password=$password" .
+        echo "[<a href=\"server.php?action=list_notes" .
             "&skip=$prevSkip&search=$search".
             "&order_by=$order_by\">Previous Page</a>] ";
         }
     if( $nextSkip < $totalNotes ) {
-        echo "[<a href=\"server.php?action=list_notes&password=$password" .
+        echo "[<a href=\"server.php?action=list_notes" .
             "&skip=$nextSkip&search=$search".
             "&order_by=$order_by\">Next Page</a>]";
         }
@@ -745,14 +762,14 @@ function ns_listNotes() {
 
     
     function orderLink( $inOrderBy, $inLinkText ) {
-        global $password, $skip, $search, $order_by;
+        global $skip, $search, $order_by;
         if( $inOrderBy == $order_by ) {
             // already displaying this order, don't show link
             return "<b>$inLinkText</b>";
             }
 
         // else show a link to switch to this order
-        return "<a href=\"server.php?action=list_notes&password=$password" .
+        return "<a href=\"server.php?action=list_notes" .
             "&search=$search&skip=$skip&order_by=$inOrderBy\">$inLinkText</a>";
         }
 
@@ -813,11 +830,11 @@ function ns_listNotes() {
         echo "<tr bgcolor=#CCCCCC>\n";
         echo "<td><font size=6>".
             "<a href=\"server.php?action=view_note&uid=$uid&".
-            "password=$password&order_by=$order_by\">".
+            "order_by=$order_by\">".
             "$title_line</a></font></td>\n";
         echo "<td align=right>".
             "[<a href=\"server.php?action=edit_note&uid=$uid&".
-            "password=$password&order_by=$order_by\">Edit</a>]</td>\n";
+            "order_by=$order_by\">Edit</a>]</td>\n";
         echo "</tr>\n";
 
         $snippet = trim( $body_text );
@@ -857,7 +874,7 @@ function ns_listNotes() {
 
     
     echo "<br><table border=0 width=100%><tr><td align=right>";
-    echo "<a href=\"server.php?action=show_log&password=$password\">".
+    echo "<a href=\"server.php?action=show_log\">".
         "Log</a>";
     echo "</td></tr></table>";
         
@@ -868,7 +885,7 @@ function ns_listNotes() {
 
 function ns_viewNote() {
 
-    $password = ns_checkPassword( "view_note" );
+    ns_checkPassword( "view_note" );
     
     $uid = "";
     if( isset( $_REQUEST[ "uid" ] ) ) {
@@ -941,10 +958,10 @@ function ns_viewNote() {
     
     eval( $header );
 
-    ns_menuBar( $password, "" );
+    ns_menuBar( "" );
     
 
-    echo "[<a href=\"server.php?action=edit_note&uid=$uid&password=$password" .
+    echo "[<a href=\"server.php?action=edit_note&uid=$uid" .
         "\">Edit</a>]<br>";
 
     echo "<table border=0 width=100% cellpadding=10>".
@@ -972,7 +989,7 @@ function ns_viewNote() {
 
 function ns_editNote() {
 
-    $password = ns_checkPassword( "edit_note" );
+    ns_checkPassword( "edit_note" );
     
     $uid = "";
     if( isset( $_REQUEST[ "uid" ] ) ) {
@@ -1021,7 +1038,7 @@ function ns_editNote() {
     
     eval( $header );
 
-    ns_menuBar( $password, "" );
+    ns_menuBar( "" );
     
     ?>
      <center>
@@ -1030,8 +1047,6 @@ function ns_editNote() {
           VALUE="update_note">
      <INPUT TYPE="hidden" NAME="uid"
           VALUE="<?php echo $uid; ?>">
-     <INPUT TYPE="hidden" NAME="password"
-          VALUE="<?php echo $password; ?>">          
      <INPUT TYPE="hidden" NAME="from_web" VALUE="1">
 
      <TEXTAREA NAME="body_text" COLS=90
@@ -1049,7 +1064,7 @@ function ns_editNote() {
 
 function ns_newNote() {
 
-    $password = ns_checkPassword( "new_note" );    
+    ns_checkPassword( "new_note" );    
     
     global $tableNamePrefix;
 
@@ -1069,15 +1084,13 @@ function ns_newNote() {
     
     eval( $header );
 
-    ns_menuBar( $password, "" );
+    ns_menuBar( "" );
 
     ?>
         <center>
      <FORM ACTION="server.php" METHOD="post">
      <INPUT TYPE="hidden" NAME="action"
           VALUE="add_note">
-     <INPUT TYPE="hidden" NAME="password"
-          VALUE="<?php echo $password; ?>">          
      <INPUT TYPE="hidden" NAME="from_web" VALUE="1">
 
      <TEXTAREA NAME="body_text" COLS=90 ROWS=20></TEXTAREA>
@@ -1261,23 +1274,113 @@ function ns_stripslashes_deep( $inValue ) {
 
 
 
+
+// this function checks the password directly from a request variable
+// or via hash from a cookie.
+//
+// It then sets a new cookie for the next request.
+//
+// This avoids storing the password itself in the cookie, so a stale cookie
+// (cached by a browser) can't be used to figure out the cookie and log in
+// later. 
 function ns_checkPassword( $inFunctionName ) {
     $password = "";
+    $password_hash = "";
+
+    $badCookie = false;
+    
+    
+    global $accessPasswords, $tableNamePrefix, $remoteIP;
+
+    $cookieName = $tableNamePrefix . "cookie_password_hash";
+
+    
     if( isset( $_REQUEST[ "password" ] ) ) {
         $password = $_REQUEST[ "password" ];
-        }
 
-    global $accessPasswords;
+        // generate a new hash cookie from this password
+        $newSalt = time();
+        $newHash = md5( $newSalt . $password );
+        
+        $password_hash = $newSalt . "_" . $newHash;
+        }
+    else if( isset( $_COOKIE[ $cookieName ] ) ) {
+        $password_hash = $_COOKIE[ $cookieName ];
+        
+        // check that it's a good hash
+        
+        $hashParts = preg_split( "/_/", $password_hash );
+
+        // default, to show in log message on failure
+        // gets replaced if cookie contains a good hash
+        $password = "(bad cookie:  $password_hash)";
+
+        $badCookie = true;
+        
+        if( count( $hashParts ) == 2 ) {
+            
+            $salt = $hashParts[0];
+            $hash = $hashParts[1];
+
+            foreach( $accessPasswords as $truePassword ) {    
+                $trueHash = md5( $salt . $truePassword );
+            
+                if( $trueHash == $hash ) {
+                    $password = $truePassword;
+                    $badCookie = false;
+                    }
+                }
+            
+            }
+        }
+    else {
+        // no request variable, no cookie
+        // cookie probably expired
+        $badCookie = true;
+        $password_hash = "(no cookie.  expired?)";
+        }
+    
+        
     
     if( ! in_array( $password, $accessPasswords ) ) {
-        echo "REJECTED";
 
-        ns_log( "Failed $inFunctionName access with password:  $password" );
+        if( ! $badCookie ) {
+            
+            echo "Incorrect password.";
 
+            ns_log( "Failed $inFunctionName access with password:  ".
+                    "$password" );
+            }
+        else {
+            echo "Session expired.";
+                
+            ns_log( "Failed $inFunctionName access with bad cookie:  ".
+                    "$password_hash" );
+            }
+        
         die();
         }
-
-    return $password;
+    else {
+        // set cookie again, renewing it, expires in 24 hours
+        $expireTime = time() + 60 * 60 * 24;
+    
+        setcookie( $cookieName, $password_hash, $expireTime, "/" );
+        }
     }
+ 
+
+
+
+function ns_clearPasswordCookie() {
+    global $tableNamePrefix;
+
+    $cookieName = $tableNamePrefix . "cookie_password_hash";
+
+    // expire 24 hours ago (to avoid timezone issues)
+    $expireTime = time() - 60 * 60 * 24;
+
+    setcookie( $cookieName, "", $expireTime, "/" );
+    }
+
 
 ?>
