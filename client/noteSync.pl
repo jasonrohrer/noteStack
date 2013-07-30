@@ -354,6 +354,10 @@ sub serverPost {
 
 	my $req = POST "$url", $hashRef;
 
+	# prevent use of libwww-perl User-Agent header, which is Forbidden
+	# on some web servers
+	$ua->agent("");
+
 	my $result = $ua->request( $req );
 
 	if( $result->is_success ) {
