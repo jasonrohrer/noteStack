@@ -1121,6 +1121,7 @@ function ns_newNote() {
 
 
 
+$ns_mysqlLink;
 
 
 
@@ -1131,14 +1132,14 @@ function ns_newNote() {
  */  
 function ns_connectToDatabase() {
     global $databaseServer,
-        $databaseUsername, $databasePassword, $databaseName;
+        $databaseUsername, $databasePassword, $databaseName, $ns_mysqlLink;
     
-    
-    mysqli_connect( $databaseServer, $databaseUsername, $databasePassword )
+    $ns_mysqlLink =
+        mysqli_connect( $databaseServer, $databaseUsername, $databasePassword )
         or ns_fatalError( "Could not connect to database server: " .
-                       mysqli_error() );
+                          mysqli_error() );
     
-	mysqli_select_db( $databaseName )
+	mysqli_select_db( $ns_mysqlLink, $databaseName )
         or ns_fatalError( "Could not select $databaseName database: " .
                        mysqli_error() );
     }
@@ -1149,7 +1150,9 @@ function ns_connectToDatabase() {
  * Closes the database connection.
  */
 function ns_closeDatabase() {
-    mysqli_close();
+    global $ns_mysqlLink;
+    
+    mysqli_close( $ns_mysqlLink );
     }
 
 
@@ -1162,10 +1165,11 @@ function ns_closeDatabase() {
  * @return a result handle that can be passed to other mysql functions.
  */
 function ns_queryDatabase( $inQueryString ) {
+    global $ns_mysqlLink;
 
-    $result = mysqli_query( $inQueryString )
+    $result = mysqli_query( $ns_mysqlLink, $inQueryString )
         or ns_fatalError( "Database query failed:<BR>$inQueryString<BR><BR>" .
-                       mysqli_error() );
+                       mysqli_error( $ns_mysqlLink ) );
 
     return $result;
     }
