@@ -43,7 +43,14 @@ $setup_footer = "
 
 
 
+if( ! function_exists('get_magic_quotes_gpc') ) {
+    
+    function get_magic_quotes_gpc() {
+        return false;
+        }
+    }
 
+      
 
 // ensure that magic quotes are on (adding slashes before quotes
 // so that user-submitted data can be safely submitted in DB queries)
