@@ -64,6 +64,14 @@ if( !get_magic_quotes_gpc() ) {
     
 
 
+/**
+ * Replacement for the old mysql_result function.
+ */
+function ns_mysqli_result( $result, $number, $field=0 ) {
+    mysqli_data_seek( $result, $number );
+    $row = mysqli_fetch_array( $result );
+    return $row[ $field ];
+    }
 
 
 
@@ -279,7 +287,7 @@ function ns_showLog() {
     $query = "SELECT * FROM $tableNamePrefix"."log ORDER BY entry_time DESC;";
     $result = ns_queryDatabase( $query );
     
-    $numRows = mysql_numrows( $result );
+    $numRows = mysqli_num_rows( $result );
 
     echo "<a href=\"server.php?action=clear_log\">".
         "Clear log</a>";
@@ -290,8 +298,8 @@ function ns_showLog() {
     
     
     for( $i=0; $i<$numRows; $i++ ) {
-        $time = mysql_result( $result, $i, "entry_time" );
-        $entry = mysql_result( $result, $i, "entry" );
+        $time = ns_mysqli_result( $result, $i, "entry_time" );
+        $entry = ns_mysqli_result( $result, $i, "entry" );
         
         echo "<b>$time</b>:<br>$entry<hr>\n";
         }
@@ -355,12 +363,12 @@ function ns_getNoteList() {
         "ORDER BY view_date DESC";
     $result = ns_queryDatabase( $query );
 
-    $numRows = mysql_numrows( $result );
+    $numRows = mysqli_num_rows( $result );
 
 
     for( $i=0; $i<$numRows; $i++ ) {
-        $uid = mysql_result( $result, $i, "uid" );
-        $hash = mysql_result( $result, $i, "hash" );
+        $uid = ns_mysqli_result( $result, $i, "uid" );
+        $hash = ns_mysqli_result( $result, $i, "hash" );
 
         echo "$uid $hash\n";
         }
@@ -401,11 +409,11 @@ function ns_getNote() {
         "WHERE uid = '$uid'";
     $result = ns_queryDatabase( $query );
 
-    $numRows = mysql_numrows( $result );
+    $numRows = mysqli_num_rows( $result );
 
 
     if( $numRows == 1 ) {
-        $body_text = mysql_result( $result, 0, "body_text" );
+        $body_text = ns_mysqli_result( $result, 0, "body_text" );
         echo "$body_text";
         }
     else {
@@ -495,7 +503,7 @@ function ns_addNote() {
 
     $result = ns_queryDatabase( $query );
 
-    $uid = mysql_insert_id();
+    $uid = mysqli_insert_id();
 
 
     if( !$from_web ) {
@@ -575,7 +583,7 @@ function ns_updateNote() {
 
     $result = ns_queryDatabase( $query );
 
-    if( mysql_affected_rows() == 1 ) {
+    if( mysqli_affected_rows() == 1 ) {
 
         if( !$from_web ) {
             echo "$hash";
@@ -700,7 +708,7 @@ function ns_listNotes() {
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."notes $keywordClause;";
 
     $result = ns_queryDatabase( $query );
-    $totalNotes = mysql_result( $result, 0, 0 );
+    $totalNotes = ns_mysqli_result( $result, 0, 0 );
 
     
              
@@ -709,7 +717,7 @@ function ns_listNotes() {
         "LIMIT $skip, $notesPerPage;";
     $result = ns_queryDatabase( $query );
     
-    $numRows = mysql_numrows( $result );
+    $numRows = mysqli_num_rows( $result );
 
     $startSkip = $skip + 1;
     
@@ -821,12 +829,12 @@ function ns_listNotes() {
     
 
     for( $i=0; $i<$numRows; $i++ ) {
-        $uid = mysql_result( $result, $i, "uid" );
-        $body_text = mysql_result( $result, $i, "body_text" );
-        $title_line = mysql_result( $result, $i, "title_line" );
-        $creation_date = mysql_result( $result, $i, "creation_date" );
-        $change_date = mysql_result( $result, $i, "change_date" );
-        $view_date = mysql_result( $result, $i, "view_date" );
+        $uid = ns_mysqli_result( $result, $i, "uid" );
+        $body_text = ns_mysqli_result( $result, $i, "body_text" );
+        $title_line = ns_mysqli_result( $result, $i, "title_line" );
+        $creation_date = ns_mysqli_result( $result, $i, "creation_date" );
+        $change_date = ns_mysqli_result( $result, $i, "change_date" );
+        $view_date = ns_mysqli_result( $result, $i, "view_date" );
         
         $creationString = dateFormat( $creation_date );
         $changeString = dateFormat( $change_date );
@@ -924,7 +932,7 @@ function ns_viewNote() {
         "WHERE uid = '$uid'";
     $result = ns_queryDatabase( $query );
 
-    $numRows = mysql_numrows( $result );
+    $numRows = mysqli_num_rows( $result );
 
 
 
@@ -935,9 +943,9 @@ function ns_viewNote() {
         }
 
     
-    $body_text = mysql_result( $result, 0, "body_text" );
-    $created = dateFormat( mysql_result( $result, 0, "creation_date" ) );
-    $changed = dateFormat( mysql_result( $result, 0, "change_date" ) );
+    $body_text = ns_mysqli_result( $result, 0, "body_text" );
+    $created = dateFormat( ns_mysqli_result( $result, 0, "creation_date" ) );
+    $changed = dateFormat( ns_mysqli_result( $result, 0, "change_date" ) );
     
     
     $formattedText =
@@ -1027,7 +1035,7 @@ function ns_editNote() {
         "WHERE uid = '$uid'";
     $result = ns_queryDatabase( $query );
 
-    $numRows = mysql_numrows( $result );
+    $numRows = mysqli_num_rows( $result );
 
 
 
@@ -1038,7 +1046,7 @@ function ns_editNote() {
         }
 
     
-    $body_text = mysql_result( $result, 0, "body_text" );
+    $body_text = ns_mysqli_result( $result, 0, "body_text" );
 
 
     global $header, $footer;
@@ -1126,13 +1134,13 @@ function ns_connectToDatabase() {
         $databaseUsername, $databasePassword, $databaseName;
     
     
-    mysql_connect( $databaseServer, $databaseUsername, $databasePassword )
+    mysqli_connect( $databaseServer, $databaseUsername, $databasePassword )
         or ns_fatalError( "Could not connect to database server: " .
-                       mysql_error() );
+                       mysqli_error() );
     
-	mysql_select_db( $databaseName )
+	mysqli_select_db( $databaseName )
         or ns_fatalError( "Could not select $databaseName database: " .
-                       mysql_error() );
+                       mysqli_error() );
     }
 
 
@@ -1141,7 +1149,7 @@ function ns_connectToDatabase() {
  * Closes the database connection.
  */
 function ns_closeDatabase() {
-    mysql_close();
+    mysqli_close();
     }
 
 
@@ -1155,9 +1163,9 @@ function ns_closeDatabase() {
  */
 function ns_queryDatabase( $inQueryString ) {
 
-    $result = mysql_query( $inQueryString )
+    $result = mysqli_query( $inQueryString )
         or ns_fatalError( "Database query failed:<BR>$inQueryString<BR><BR>" .
-                       mysql_error() );
+                       mysqli_error() );
 
     return $result;
     }
@@ -1178,12 +1186,12 @@ function ns_doesTableExist( $inTableName ) {
     $query = "SHOW TABLES";
     $result = ns_queryDatabase( $query );
 
-    $numRows = mysql_numrows( $result );
+    $numRows = mysqli_num_rows( $result );
 
 
     for( $i=0; $i<$numRows && ! $tableExists; $i++ ) {
 
-        $tableName = mysql_result( $result, $i, 0 );
+        $tableName = ns_mysqli_result( $result, $i, 0 );
         
         if( $tableName == $inTableName ) {
             $tableExists = 1;
