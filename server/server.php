@@ -503,7 +503,9 @@ function ns_addNote() {
 
     $result = ns_queryDatabase( $query );
 
-    $uid = mysqli_insert_id();
+    global $ns_mysqlLink;
+    
+    $uid = mysqli_insert_id( $ns_mysqlLink );
 
 
     if( !$from_web ) {
