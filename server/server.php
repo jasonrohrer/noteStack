@@ -585,7 +585,9 @@ function ns_updateNote() {
 
     $result = ns_queryDatabase( $query );
 
-    if( mysqli_affected_rows() == 1 ) {
+    global $ns_mysqlLink;
+    
+    if( mysqli_affected_rows( $ns_mysqlLink ) == 1 ) {
 
         if( !$from_web ) {
             echo "$hash";
